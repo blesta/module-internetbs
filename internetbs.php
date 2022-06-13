@@ -1129,9 +1129,6 @@ class Internetbs extends RegistrarModule
      */
     private function featureServiceEnabled($feature, $service)
     {
-        # TODO: Remove for production
-        return true;
-
         // Get service option groups
         foreach ($service->options as $option) {
             if ($option->option_name == $feature) {
@@ -1513,35 +1510,34 @@ class Internetbs extends RegistrarModule
             $last_request = $api->lastRequest();
             $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
             $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+
+            unset($response);
         } catch (Throwable $e) {
             $this->Input->setErrors(['errors' => ['url_forwarding' => $e->getMessage()]]);
         }
 
-        // Update rules
+        // Add rule
         if (!empty($post)) {
-            // Add rule
-            if (empty($post['delete'])) {
-                $response = $command->add($post);
-            }
-
-            // Delete rule
-            if (!empty($post['delete'])) {
-                $response = $command->remove(['Source' => $post['delete']]);
-            }
-
-            // Set errors, if any
-            if (isset($response)) {
-                if ($response->status() != 200) {
-                    $errors = $response->errors() ?? [];
-                    $this->Input->setErrors(['errors' => (array) $errors]);
-                }
-
-                $last_request = $api->lastRequest();
-                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
-            }
+            $response = $command->add($post);
 
             $vars = (object) $post;
+        }
+
+        // Delete rule
+        if (!empty($get['delete']) && empty($post)) {
+            $response = $command->remove(['Source' => $get['delete']]);
+        }
+
+        // Set errors, if any
+        if (isset($response)) {
+            if ($response->status() != 200) {
+                $errors = $response->errors() ?? [];
+                $this->Input->setErrors(['errors' => (array) $errors]);
+            }
+
+            $last_request = $api->lastRequest();
+            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
         }
 
         $this->view->set('service_fields', $service_fields);
@@ -1670,20 +1666,61 @@ class Internetbs extends RegistrarModule
         // Get service fields
         $service_fields = $this->serviceFieldsToObject($service->fields);
 
-        if (!empty($post)) {
+        // Fetch domain email forwarding rules
+        try {
+            $row = $this->getModuleRow($service->module_row_id);
+            $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
 
-            // Perform any post actions
+            // Load API command
+            $command = new InternetbsDomainEmailforward($api);
 
-            if ($this->Services->errors()) {
-                $this->Input->setErrors($this->Services->errors());
+            // List domain rules
+            $response = $command->list(['Domain' => $service_fields->domain]);
+            $domain_rules = $response->response();
+
+            // Set errors, if any
+            if ($response->status() != 200) {
+                $errors = $response->errors() ?? [];
+                $this->Input->setErrors(['errors' => (array) $errors]);
             }
 
-            $vars = (object)$post;
+            $last_request = $api->lastRequest();
+            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+
+            unset($response);
+        } catch (Throwable $e) {
+            $this->Input->setErrors(['errors' => ['email_forwarding' => $e->getMessage()]]);
+        }
+
+        // Add rule
+        if (!empty($post)) {
+            $response = $command->add($post);
+
+            $vars = (object) $post;
+        }
+
+        // Delete rule
+        if (!empty($get['delete']) && empty($post)) {
+            $response = $command->remove(['Source' => $get['delete']]);
+        }
+
+        // Set errors, if any
+        if (isset($response)) {
+            if ($response->status() != 200) {
+                $errors = $response->errors() ?? [];
+                $this->Input->setErrors(['errors' => (array) $errors]);
+            }
+
+            $last_request = $api->lastRequest();
+            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
         }
 
         $this->view->set('service_fields', $service_fields);
         $this->view->set('service_id', $service->id);
         $this->view->set('client_id', $service->client_id);
+        $this->view->set('domain_rules', $domain_rules->rule ?? []);
         $this->view->set('vars', ($vars ?? new stdClass()));
 
         $this->view->setDefaultView('components' . DS . 'modules' . DS . 'internetbs' . DS);
@@ -1717,20 +1754,62 @@ class Internetbs extends RegistrarModule
         // Get service fields
         $service_fields = $this->serviceFieldsToObject($service->fields);
 
-        if (!empty($post)) {
+        // Fetch domain email forwarding rules
+        try {
+            $row = $this->getModuleRow($service->module_row_id);
+            $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
 
-            // Perform any post actions
+            // Load API command
+            $command = new InternetbsDomainEmailforward($api);
 
-            if ($this->Services->errors()) {
-                $this->Input->setErrors($this->Services->errors());
+            // List domain rules
+            $response = $command->list(['Domain' => $service_fields->domain]);
+            $domain_rules = $response->response();
+
+            // Set errors, if any
+            if ($response->status() != 200) {
+                $errors = $response->errors() ?? [];
+                $this->Input->setErrors(['errors' => (array) $errors]);
             }
 
-            $vars = (object)$post;
+            $last_request = $api->lastRequest();
+            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        } catch (Throwable $e) {
+            $this->Input->setErrors(['errors' => ['email_forwarding' => $e->getMessage()]]);
+        }
+
+        // Update rules
+        if (!empty($post)) {
+            // Add rule
+            if (empty($post['delete'])) {
+                $response = $command->add($post);
+            }
+
+            // Delete rule
+            if (!empty($post['delete'])) {
+                $response = $command->remove(['Source' => $post['delete']]);
+            }
+
+            // Set errors, if any
+            if (isset($response)) {
+                if ($response->status() != 200) {
+                    $errors = $response->errors() ?? [];
+                    $this->Input->setErrors(['errors' => (array) $errors]);
+                }
+
+                $last_request = $api->lastRequest();
+                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+            }
+
+            $vars = (object) $post;
         }
 
         $this->view->set('service_fields', $service_fields);
         $this->view->set('service_id', $service->id);
         $this->view->set('client_id', $service->client_id);
+        $this->view->set('domain_rules', $domain_rules->rule ?? []);
         $this->view->set('vars', ($vars ?? new stdClass()));
 
         $this->view->setDefaultView('components' . DS . 'modules' . DS . 'internetbs' . DS);
@@ -1764,21 +1843,58 @@ class Internetbs extends RegistrarModule
         // Get service fields
         $service_fields = $this->serviceFieldsToObject($service->fields);
 
+        // Determine if this service has access to id_protection
+        $id_protection = $this->featureServiceEnabled('id_protection', $service);
+
+        // Determine if this service has access to epp_code
+        $epp_code = $package->meta->epp_code ?? '0';
+
+        // Update domain settings
         if (!empty($post)) {
-
-            // Perform any post actions
-
-            if ($this->Services->errors()) {
-                $this->Input->setErrors($this->Services->errors());
+            if (!empty($post['registrarlock'])) {
+                if ($post['registrarlock'] == 'ENABLED') {
+                    $this->lockDomain($service_fields->domain, $service->module_row_id);
+                }
+                if ($post['registrarlock'] == 'DISABLED') {
+                    $this->unlockDomain($service_fields->domain, $service->module_row_id);
+                }
             }
 
-            $vars = (object)$post;
+            if (!empty($post['privatewhois'])) {
+                $row = $this->getModuleRow($service->module_row_id);
+                $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
+
+                // Load API command
+                $command = new InternetbsDomain($api);
+
+                if ($post['privatewhois'] == 'ENABLED') {
+                    $response = $command->privateWhoisEnable(['Domain' => $service_fields->domain]);
+                }
+                if ($post['privatewhois'] == 'DISABLED') {
+                    $response = $command->privateWhoisDisable(['Domain' => $service_fields->domain]);
+                }
+
+                // Set errors, if any
+                if (isset($response) && $response->status() != 200) {
+                    $errors = $response->errors() ?? [];
+                    $this->Input->setErrors(['errors' => (array) $errors]);
+                }
+
+                $last_request = $api->lastRequest();
+                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+            }
         }
+
+        // Fetch domain info
+        $vars = (object) $this->getDomainInfo($service_fields->domain, $service->module_row_id);
 
         $this->view->set('service_fields', $service_fields);
         $this->view->set('service_id', $service->id);
         $this->view->set('client_id', $service->client_id);
-        $this->view->set('vars', ($vars ?? new stdClass()));
+        $this->view->set('id_protection', $id_protection);
+        $this->view->set('epp_code', $epp_code);
+        $this->view->set('vars', $vars);
 
         $this->view->setDefaultView('components' . DS . 'modules' . DS . 'internetbs' . DS);
 
@@ -1811,21 +1927,58 @@ class Internetbs extends RegistrarModule
         // Get service fields
         $service_fields = $this->serviceFieldsToObject($service->fields);
 
+        // Determine if this service has access to id_protection
+        $id_protection = $this->featureServiceEnabled('id_protection', $service);
+
+        // Determine if this service has access to epp_code
+        $epp_code = $package->meta->epp_code ?? '0';
+
+        // Update domain settings
         if (!empty($post)) {
-
-            // Perform any post actions
-
-            if ($this->Services->errors()) {
-                $this->Input->setErrors($this->Services->errors());
+            if (!empty($post['registrarlock'])) {
+                if ($post['registrarlock'] == 'ENABLED') {
+                    $this->lockDomain($service_fields->domain, $service->module_row_id);
+                }
+                if ($post['registrarlock'] == 'DISABLED') {
+                    $this->unlockDomain($service_fields->domain, $service->module_row_id);
+                }
             }
 
-            $vars = (object)$post;
+            if (!empty($post['privatewhois'])) {
+                $row = $this->getModuleRow($service->module_row_id);
+                $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
+
+                // Load API command
+                $command = new InternetbsDomain($api);
+
+                if ($post['privatewhois'] == 'ENABLED') {
+                    $response = $command->privateWhoisEnable(['Domain' => $service_fields->domain]);
+                }
+                if ($post['privatewhois'] == 'DISABLED') {
+                    $response = $command->privateWhoisDisable(['Domain' => $service_fields->domain]);
+                }
+
+                // Set errors, if any
+                if (isset($response) && $response->status() != 200) {
+                    $errors = $response->errors() ?? [];
+                    $this->Input->setErrors(['errors' => (array) $errors]);
+                }
+
+                $last_request = $api->lastRequest();
+                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+            }
         }
+
+        // Fetch domain info
+        $vars = (object) $this->getDomainInfo($service_fields->domain, $service->module_row_id);
 
         $this->view->set('service_fields', $service_fields);
         $this->view->set('service_id', $service->id);
         $this->view->set('client_id', $service->client_id);
-        $this->view->set('vars', ($vars ?? new stdClass()));
+        $this->view->set('id_protection', $id_protection);
+        $this->view->set('epp_code', $epp_code);
+        $this->view->set('vars', $vars);
 
         $this->view->setDefaultView('components' . DS . 'modules' . DS . 'internetbs' . DS);
 

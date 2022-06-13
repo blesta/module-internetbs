@@ -98,32 +98,92 @@ $lang['Internetbs.tab_client_nameservers.field_submit'] = 'Update Nameservers';
 
 // URL Forwarding
 $lang['Internetbs.tab_urlforwarding'] = 'URL Forwarding';
-$lang['Internetbs.tab_urlforwarding.field_submit'] = 'Submit';
+$lang['Internetbs.tab_urlforwarding.heading_current_rules'] = 'Current Rules';
+$lang['Internetbs.tab_urlforwarding.heading_add_rule'] = 'Add Rule';
+$lang['Internetbs.tab_urlforwarding.heading_source'] = 'Source';
+$lang['Internetbs.tab_urlforwarding.heading_destination'] = 'Destination';
+$lang['Internetbs.tab_urlforwarding.heading_title'] = 'Title';
+$lang['Internetbs.tab_urlforwarding.heading_options'] = 'Options';
+$lang['Internetbs.tab_urlforwarding.option_delete'] = 'Delete';
+$lang['Internetbs.tab_urlforwarding.text_no_forwarding_rules'] = 'There are no URL forwarding rules for this domain.';
+$lang['Internetbs.tab_urlforwarding.field_source'] = 'Source';
+$lang['Internetbs.tab_urlforwarding.field_destination'] = 'Destination';
+$lang['Internetbs.tab_urlforwarding.field_title'] = 'Title';
+$lang['Internetbs.tab_urlforwarding.field_submit'] = 'Add Rule';
 
 
 // Client URL Forwarding
 $lang['Internetbs.tab_client_urlforwarding'] = 'URL Forwarding';
-$lang['Internetbs.tab_client_urlforwarding.field_submit'] = 'Submit';
+$lang['Internetbs.tab_client_urlforwarding.heading_current_rules'] = 'Current Rules';
+$lang['Internetbs.tab_client_urlforwarding.heading_add_rule'] = 'Add Rule';
+$lang['Internetbs.tab_client_urlforwarding.heading_source'] = 'Source';
+$lang['Internetbs.tab_client_urlforwarding.heading_destination'] = 'Destination';
+$lang['Internetbs.tab_client_urlforwarding.heading_title'] = 'Title';
+$lang['Internetbs.tab_client_urlforwarding.heading_options'] = 'Options';
+$lang['Internetbs.tab_client_urlforwarding.option_delete'] = 'Delete';
+$lang['Internetbs.tab_client_urlforwarding.text_no_forwarding_rules'] = 'There are no URL forwarding rules for this domain.';
+$lang['Internetbs.tab_client_urlforwarding.field_source'] = 'Source';
+$lang['Internetbs.tab_client_urlforwarding.field_destination'] = 'Destination';
+$lang['Internetbs.tab_client_urlforwarding.field_title'] = 'Title';
+$lang['Internetbs.tab_client_urlforwarding.field_submit'] = 'Add Rule';
 
 
 // E-Mail Forwarding
 $lang['Internetbs.tab_emailforwarding'] = 'E-Mail Forwarding';
-$lang['Internetbs.tab_emailforwarding.field_submit'] = 'Submit';
+$lang['Internetbs.tab_emailforwarding.heading_current_rules'] = 'Current Rules';
+$lang['Internetbs.tab_emailforwarding.heading_add_rule'] = 'Add Rule';
+$lang['Internetbs.tab_emailforwarding.heading_source'] = 'Source';
+$lang['Internetbs.tab_emailforwarding.heading_destination'] = 'Destination';
+$lang['Internetbs.tab_emailforwarding.heading_options'] = 'Options';
+$lang['Internetbs.tab_emailforwarding.option_delete'] = 'Delete';
+$lang['Internetbs.tab_emailforwarding.text_no_forwarding_rules'] = 'There are no E-Mail forwarding rules for this domain.';
+$lang['Internetbs.tab_emailforwarding.field_source'] = 'Source';
+$lang['Internetbs.tab_emailforwarding.field_destination'] = 'Destination';
+$lang['Internetbs.tab_emailforwarding.field_submit'] = 'Add Rule';
 
 
 // Client E-Mail Forwarding
 $lang['Internetbs.tab_client_emailforwarding'] = 'E-Mail Forwarding';
-$lang['Internetbs.tab_client_emailforwarding.field_submit'] = 'Submit';
+$lang['Internetbs.tab_client_emailforwarding.heading_current_rules'] = 'Current Rules';
+$lang['Internetbs.tab_client_emailforwarding.heading_add_rule'] = 'Add Rule';
+$lang['Internetbs.tab_client_emailforwarding.heading_source'] = 'Source';
+$lang['Internetbs.tab_client_emailforwarding.heading_destination'] = 'Destination';
+$lang['Internetbs.tab_client_emailforwarding.heading_options'] = 'Options';
+$lang['Internetbs.tab_client_emailforwarding.option_delete'] = 'Delete';
+$lang['Internetbs.tab_client_emailforwarding.text_no_forwarding_rules'] = 'There are no E-Mail forwarding rules for this domain.';
+$lang['Internetbs.tab_client_emailforwarding.field_source'] = 'Source';
+$lang['Internetbs.tab_client_emailforwarding.field_destination'] = 'Destination';
+$lang['Internetbs.tab_client_emailforwarding.field_submit'] = 'Add Rule';
 
 
 // Settings
 $lang['Internetbs.tab_settings'] = 'Settings';
-$lang['Internetbs.tab_settings.field_submit'] = 'Submit';
+$lang['Internetbs.tab_settings.heading_settings'] = 'Settings';
+$lang['Internetbs.tab_settings.heading_auth_code'] = 'Authorization Code';
+$lang['Internetbs.tab_settings.text_auth_code'] = 'Use this authorization code to transfer your domain to another provider.';
+$lang['Internetbs.tab_settings.field_registrar_lock'] = 'Registrar Lock';
+$lang['Internetbs.tab_settings.field_registrar_lock_yes'] = 'Set the registrar lock. Recommended to prevent unauthorized transfer.';
+$lang['Internetbs.tab_settings.field_registrar_lock_no'] = 'Release the registrar lock so the domain can be transferred.';
+$lang['Internetbs.tab_settings.field_whois_privacy'] = 'WHOIS Privacy';
+$lang['Internetbs.tab_settings.field_whois_privacy_state_yes'] = 'Enabled';
+$lang['Internetbs.tab_settings.field_whois_privacy_state_no'] = 'Disabled';
+$lang['Internetbs.tab_settings.field_epp_code'] = 'EPP Code';
+$lang['Internetbs.tab_settings.field_submit'] = 'Update Settings';
 
 
 // Client Settings
 $lang['Internetbs.tab_client_settings'] = 'Settings';
-$lang['Internetbs.tab_client_settings.field_submit'] = 'Submit';
+$lang['Internetbs.tab_client_settings.heading_settings'] = 'Settings';
+$lang['Internetbs.tab_client_settings.heading_auth_code'] = 'Authorization Code';
+$lang['Internetbs.tab_client_settings.text_auth_code'] = 'Use this authorization code to transfer your domain to another provider.';
+$lang['Internetbs.tab_client_settings.field_registrar_lock'] = 'Registrar Lock';
+$lang['Internetbs.tab_client_settings.field_registrar_lock_yes'] = 'Set the registrar lock. Recommended to prevent unauthorized transfer.';
+$lang['Internetbs.tab_client_settings.field_registrar_lock_no'] = 'Release the registrar lock so the domain can be transferred.';
+$lang['Internetbs.tab_client_settings.field_whois_privacy'] = 'WHOIS Privacy';
+$lang['Internetbs.tab_client_settings.field_whois_privacy_state_yes'] = 'Enabled';
+$lang['Internetbs.tab_client_settings.field_whois_privacy_state_no'] = 'Disabled';
+$lang['Internetbs.tab_client_settings.field_epp_code'] = 'EPP Code';
+$lang['Internetbs.tab_client_settings.field_submit'] = 'Update Settings';
 
 
 // Service info

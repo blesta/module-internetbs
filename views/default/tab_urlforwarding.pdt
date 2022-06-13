@@ -3,16 +3,16 @@
     $this->Form->create();
     ?>
     <div class="title_row first">
-        <h3>Current Rules</h3>
+        <h3><?php $this->_('Internetbs.tab_urlforwarding.heading_current_rules');?></h3>
     </div>
     <div class="pad">
         <table class="table">
             <tbody>
                 <tr class="heading_row">
-                    <td>Source</td>
-                    <td>Destination</td>
-                    <td>Title</td>
-                    <td class="last">Options</td>
+                    <td><?php $this->_('Internetbs.tab_urlforwarding.heading_source');?></td>
+                    <td><?php $this->_('Internetbs.tab_urlforwarding.heading_destination');?></td>
+                    <td><?php $this->_('Internetbs.tab_urlforwarding.heading_title');?></td>
+                    <td class="last"><?php $this->_('Internetbs.tab_urlforwarding.heading_options');?></td>
                 </tr>
 
                 <?php
@@ -24,9 +24,7 @@
                     <td><?php echo $this->Html->safe($rule->destination);?></td>
                     <td><?php echo $this->Html->safe($rule->title);?></td>
                     <td>
-                        <button class="btn btn-danger btn-xs" type="submit" name="delete" value="<?php echo $this->Html->safe($rule->source);?>">
-                            <i class="fas fa-ban fa-fw"></i> Delete
-                        </button>
+                        <a href="?delete=<?php echo urlencode($rule->source);?>" class="manage"><?php $this->_('Internetbs.tab_urlforwarding.option_delete');?></a>
                     </td>
                 </tr>
                 <?php
@@ -39,7 +37,7 @@
                             <article class="error_box alert">
                                 <div class="icon-line fa-2x">
                                     <i class="fas fa-exclamation-triangle fa-fw"></i>
-                                    <p style="padding-bottom: 0px !important;">There are no URL forwarding rules for this domain.</p>
+                                    <p style="padding-bottom: 0px !important;"><?php $this->_('Internetbs.tab_urlforwarding.text_no_forwarding_rules');?></p>
                                 </div>
                             </article>
                         </section>
@@ -53,40 +51,34 @@
     </div>
 
     <div class="title_row">
-        <h3>Current Rules</h3>
+        <h3><?php $this->_('Internetbs.tab_urlforwarding.heading_add_rule');?></h3>
     </div>
     <div class="pad">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="form-group">
-                    <?php
-                    $this->Form->label('Source', 'source');
-                    $this->Form->fieldText('Source', ($vars->Source ?? ''), ['id' => 'source', 'class'=>'w-100', 'placeholder' => 'http://example.com/page']);
-                    ?>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                    <?php
-                    $this->Form->label('Destination', 'destination');
-                    $this->Form->fieldText('Destination', ($vars->Destination ?? ''), ['id' => 'destination', 'class'=>'w-100', 'placeholder' => 'http://example.org/new-page']);
-                    ?>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                    <?php
-                    $this->Form->label('Title', 'site_title');
-                    $this->Form->fieldText('siteTitle', ($vars->Title ?? ''), ['id' => 'site_title', 'class'=>'w-100', 'placeholder' => 'Title']);
-                    ?>
-                </div>
-            </div>
-        </div>
+        <ul>
+            <li>
+                <?php
+                $this->Form->label($this->_('Internetbs.tab_urlforwarding.field_source', true), 'source');
+                $this->Form->fieldText('Source', ($vars->Source ?? ''), ['id' => 'source']);
+                ?>
+            </li>
+            <li>
+                <?php
+                $this->Form->label($this->_('Internetbs.tab_urlforwarding.field_destination', true), 'destination');
+                $this->Form->fieldText('Destination', ($vars->Destination ?? ''), ['id' => 'destination']);
+                ?>
+            </li>
+            <li>
+                <?php
+                $this->Form->label($this->_('Internetbs.tab_urlforwarding.field_title', true), 'site_title');
+                $this->Form->fieldText('siteTitle', ($vars->Title ?? ''), ['id' => 'site_title']);
+                ?>
+            </li>
+        </ul>
     </div>
 
     <div class="button_row">
         <?php
-        $this->Form->fieldSubmit(null, 'Add Rule', ['class' => 'btn btn-primary float-right']);
+        $this->Form->fieldSubmit(null, $this->_('Internetbs.tab_urlforwarding.field_submit', true), ['class' => 'btn btn-primary float-right']);
         ?>
     </div>
     <?php

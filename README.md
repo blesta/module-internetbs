@@ -1,6 +1,8 @@
-# Internet.bs
+# Internet.bs Module
 
+[![Build Status](https://travis-ci.org/blesta/module-internetbs.svg?branch=master)](https://travis-ci.org/blesta/module-internetbs) [![Coverage Status](https://coveralls.io/repos/github/blesta/module-internetbs/badge.svg?branch=master)](https://coveralls.io/github/blesta/module-internetbs?branch=master)
 
+This is a module for Blesta that integrates with [Internet.bs](https://internetbs.net).
 
 ## Install the Module
 
