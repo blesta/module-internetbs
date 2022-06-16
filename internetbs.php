@@ -1816,7 +1816,7 @@ class Internetbs extends RegistrarModule
 
         return $this->view->fetch();
     }
-    
+
     /**
      * Settings tab
      *
@@ -1984,7 +1984,7 @@ class Internetbs extends RegistrarModule
 
         return $this->view->fetch();
     }
-    
+
     /**
      * Returns all fields to display to an admin attempting to add a service with the module
      *
@@ -2420,15 +2420,7 @@ class Internetbs extends RegistrarModule
      */
     public function getFilteredTldPricing($module_row_id = null, $filters = [])
     {
-        // Fetch the TLDs results from the cache, if they exist
-        $cache = Cache::fetchCache(
-            'tlds_prices',
-            Configure::get('Blesta.company_id') . DS . 'modules' . DS . 'internetbs' . DS
-        );
-
-        if ($cache) {
-            $response = unserialize(base64_decode($cache));
-        }
+        $response = $this->getRawTldData($module_row_id);
 
         // Get all currencies
         Loader::loadModels($this, ['Currencies']);
@@ -2437,38 +2429,6 @@ class Internetbs extends RegistrarModule
         $company_currencies = $this->Currencies->getAll(Configure::get('Blesta.company_id'));
         foreach ($company_currencies as $currency) {
             $currencies[$currency->code] = $currency;
-        }
-
-        // Get remote price list
-        if (!isset($response)) {
-            $row = $this->getModuleRow($module_row_id);
-            $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
-
-            // Load API command
-            $command = new InternetbsAccount($api);
-
-            // Get domain price list
-            $price_list = $command->getPriceList(['version' => 2]);
-            $response = $price_list->response();
-
-            // Save pricing in cache
-            if (Configure::get('Caching.on') && is_writable(CACHEDIR)) {
-                try {
-                    Cache::writeCache(
-                        'tlds_prices',
-                        base64_encode(serialize($response)),
-                        strtotime(Configure::get('Blesta.cache_length')) - time(),
-                        Configure::get('Blesta.company_id') . DS . 'modules' . DS . 'internetbs' . DS
-                    );
-                } catch (Exception $e) {
-                    // Write to cache failed, so disable caching
-                    Configure::set('Caching.on', false);
-                }
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $price_list->raw(), 'output', $price_list->status() == 200);
         }
 
         // Format pricing
@@ -2552,6 +2512,60 @@ class Internetbs extends RegistrarModule
         }
 
         return $tld_yearly_prices;
+    }
+
+    /**
+     * Get a list of raw TLD pricing data
+     *
+     * @param int $module_row_id The ID of the module row to fetch for the current module
+     *
+     * @return stdClass The response from the cache or API
+     */
+    private function getRawTldData($module_row_id = null)
+    {
+        // Fetch the TLDs results from the cache, if they exist
+        $cache = Cache::fetchCache(
+            'tlds_prices',
+            Configure::get('Blesta.company_id') . DS . 'modules' . DS . 'internetbs' . DS
+        );
+
+        if ($cache) {
+            $response = unserialize(base64_decode($cache));
+        }
+
+        // Get remote price list
+        if (!isset($response)) {
+            $row = $this->getModuleRow($module_row_id);
+            $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
+
+            // Load API command
+            $command = new InternetbsAccount($api);
+
+            // Get domain price list
+            $price_list = $command->getPriceList(['version' => 2]);
+            $response = $price_list->response();
+
+            // Save pricing in cache
+            if (Configure::get('Caching.on') && is_writable(CACHEDIR)) {
+                try {
+                    Cache::writeCache(
+                        'tlds_prices',
+                        base64_encode(serialize($response)),
+                        strtotime(Configure::get('Blesta.cache_length')) - time(),
+                        Configure::get('Blesta.company_id') . DS . 'modules' . DS . 'internetbs' . DS
+                    );
+                } catch (Exception $e) {
+                    // Write to cache failed, so disable caching
+                    Configure::set('Caching.on', false);
+                }
+            }
+
+            $last_request = $api->lastRequest();
+            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
+            $this->log($last_request['url'], $price_list->raw(), 'output', $price_list->status() == 200);
+        }
+
+        return $response;
     }
 
     /**
@@ -3187,7 +3201,33 @@ class Internetbs extends RegistrarModule
     public function getTlds($module_row_id = null)
     {
         try {
-            return array_keys($this->getTldPricing($module_row_id));
+            $response = $this->getRawTldData($module_row_id);
+            $tlds = [];
+            $categories = [
+                'registration' => 'register',
+                'transfer' => 'transfer',
+                'renewal' => 'renew'
+            ];
+
+            foreach ($response->product as $product) {
+                // Skip if the product doesn't have any pricing
+                if (empty($product->period)) {
+                    continue;
+                }
+
+                // Skip if the product doesn't match any of the allowed categories
+                if (!array_key_exists($product->operation ?? '', $categories)) {
+                    continue;
+                }
+
+                // Get the TLD
+                $tld = '.' . ltrim($product->type, '.');
+                if (!isset($tlds[$tld])) {
+                    $tlds[] = $tld;
+                }
+            }
+
+            return $tlds;
         } catch (Throwable $e) {
             return Configure::get('Internetbs.tlds');
         }
