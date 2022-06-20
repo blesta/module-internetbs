@@ -505,7 +505,9 @@ class Internetbs extends RegistrarModule
             }
         } else {
             // Fetch the 1st account from the list of accounts in the selected group
-            $rows = $this->getModuleRows(is_int($vars->module_group) ? $vars->module_group : null);
+            $rows = $this->getModuleRows(
+                isset($vars->module_group) && is_int($vars->module_group) ? $vars->module_group : null
+            );
 
             if (isset($rows[0])) {
                 $module_row = $rows[0];
@@ -967,6 +969,16 @@ class Internetbs extends RegistrarModule
             }
         }
 
+        // Format TLD-specific fields
+        $tld_fields = (array) Configure::get('Internetbs.domain_fields' . $tld);
+        $contact_types = ['Registrant', 'Admin', 'Technical', 'Billing'];
+        foreach ($contact_types as $contact_type) {
+            foreach ($tld_fields as $field_name => $field) {
+                $vars[$contact_type . '_' . $field_name] = $vars[$field_name];
+                unset($vars[$field_name]);
+            }
+        }
+
         return $vars;
     }
 
@@ -994,62 +1006,6 @@ class Internetbs extends RegistrarModule
         }
 
         return substr($username, 0, min($length, 8));
-    }
-
-    /**
-     * Fetches the HTML content to display when viewing the service info in the
-     * admin interface.
-     *
-     * @param stdClass $service A stdClass object representing the service
-     * @param stdClass $package A stdClass object representing the service's package
-     * @return string HTML content containing information to display when viewing the service info
-     */
-    public function getAdminServiceInfo($service, $package)
-    {
-        $row = $this->getModuleRow();
-
-        // Load the view into this object, so helpers can be automatically added to the view
-        $this->view = new View('admin_service_info', 'default');
-        $this->view->base_uri = $this->base_uri;
-        $this->view->setDefaultView('components' . DS . 'modules' . DS . 'internetbs' . DS);
-
-        // Load the helpers required for this view
-        Loader::loadHelpers($this, ['Form', 'Html']);
-
-        $this->view->set('module_row', $row);
-        $this->view->set('package', $package);
-        $this->view->set('service', $service);
-        $this->view->set('service_fields', $this->serviceFieldsToObject($service->fields));
-
-        return $this->view->fetch();
-    }
-
-    /**
-     * Fetches the HTML content to display when viewing the service info in the
-     * client interface.
-     *
-     * @param stdClass $service A stdClass object representing the service
-     * @param stdClass $package A stdClass object representing the service's package
-     * @return string HTML content containing information to display when viewing the service info
-     */
-    public function getClientServiceInfo($service, $package)
-    {
-        $row = $this->getModuleRow();
-
-        // Load the view into this object, so helpers can be automatically added to the view
-        $this->view = new View('client_service_info', 'default');
-        $this->view->base_uri = $this->base_uri;
-        $this->view->setDefaultView('components' . DS . 'modules' . DS . 'internetbs' . DS);
-
-        // Load the helpers required for this view
-        Loader::loadHelpers($this, ['Form', 'Html']);
-
-        $this->view->set('module_row', $row);
-        $this->view->set('package', $package);
-        $this->view->set('service', $service);
-        $this->view->set('service_fields', $this->serviceFieldsToObject($service->fields));
-
-        return $this->view->fetch();
     }
 
     /**
@@ -2709,10 +2665,7 @@ class Internetbs extends RegistrarModule
         $command = new InternetbsDomain($api);
 
         // Get contacts
-        $contact_types = [
-            'Registrant', 'Admin',
-            'Technical', 'Billing'
-        ];
+        $contact_types = ['Registrant', 'Admin', 'Technical', 'Billing'];
         $fields_map = [
             'email' => 'email',
             'phonenumber' => 'phone',

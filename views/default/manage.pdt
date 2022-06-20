@@ -20,7 +20,6 @@
         <table class="table">
             <tr class="heading_row">
                 <td><span><?php $this->_('Internetbs.manage.module_rows_heading.api_key'); ?></span></td>
-                <td><span><?php $this->_('Internetbs.manage.module_rows_heading.password'); ?></span></td>
                 <td class="last"><span><?php $this->_('Internetbs.manage.module_rows_heading.options'); ?></span></td>
             </tr>
             <?php
@@ -28,7 +27,6 @@
                 ?>
             <tr<?php echo ($i % 2 == 1) ? ' class="odd_row"' : ''; ?>>
                 <td><?php echo (isset($module->rows[$i]->meta->api_key) ? $this->Html->safe($module->rows[$i]->meta->api_key) : null); ?></td>
-                <td><?php echo (isset($module->rows[$i]->meta->password) ? $this->Html->safe($module->rows[$i]->meta->password) : null); ?></td>
                 <td class="last">
                     <a href="<?php echo $this->Html->safe($this->base_uri . 'settings/company/modules/editrow/' . (isset($module->id) ? $module->id : null) . '/' . (isset($module->rows[$i]->id) ? $module->rows[$i]->id : null) . '/'); ?>"><?php $this->_('Internetbs.manage.module_rows.edit'); ?></a>
                     <?php

@@ -7,16 +7,15 @@ $lang['Internetbs.name'] = 'Internet.bs';
 $lang['Internetbs.description'] = 'Internet.bs provides domain name registration and transfers for ccTLDs and gTLDs.';
 $lang['Internetbs.module_row'] = 'Account';
 $lang['Internetbs.module_row_plural'] = 'Accounts';
-$lang['Internetbs.module_group'] = 'Accounts Group';
+$lang['Internetbs.module_group'] = 'Account Group';
 
 
 // Module management
 $lang['Internetbs.add_module_row'] = 'Add Account';
-$lang['Internetbs.add_module_group'] = 'Add Accounts Group';
+$lang['Internetbs.add_module_group'] = 'Add Account Group';
 $lang['Internetbs.manage.module_rows_title'] = 'Accounts';
 
 $lang['Internetbs.manage.module_rows_heading.api_key'] = 'API Key';
-$lang['Internetbs.manage.module_rows_heading.password'] = 'Password';
 $lang['Internetbs.manage.module_rows_heading.options'] = 'Options';
 $lang['Internetbs.manage.module_rows.edit'] = 'Edit';
 $lang['Internetbs.manage.module_rows.delete'] = 'Delete';
@@ -31,9 +30,9 @@ $lang['Internetbs.manage.module_groups_heading.options'] = 'Options';
 
 $lang['Internetbs.manage.module_groups.edit'] = 'Edit';
 $lang['Internetbs.manage.module_groups.delete'] = 'Delete';
-$lang['Internetbs.manage.module_groups.confirm_delete'] = 'Are you sure you want to delete this Account';
+$lang['Internetbs.manage.module_groups.confirm_delete'] = 'Are you sure you want to delete this Account Group';
 
-$lang['Internetbs.manage.module_groups.no_results'] = 'There is no Accounts Group';
+$lang['Internetbs.manage.module_groups.no_results'] = 'There is no Account Groups';
 
 $lang['Internetbs.order_options.roundrobin'] = 'Evenly Distribute Among Servers';
 $lang['Internetbs.order_options.first'] = 'First Non-full Server';
@@ -298,6 +297,7 @@ $lang['Internetbs.domain.usPurpose.p3'] = 'Personal use';
 $lang['Internetbs.domain.usPurpose.p4'] = 'Educational purposes';
 $lang['Internetbs.domain.usPurpose.p5'] = 'Government purposes';
 
+$lang['Internetbs.domain.nlLegalForm'] = 'Legal Form';
 $lang['Internetbs.domain.nlLegalForm.BGG'] = 'Non-Dutch EC company';
 $lang['Internetbs.domain.nlLegalForm.BRO'] = 'Non-Dutch legal form/enterprise/subsidiary';
 $lang['Internetbs.domain.nlLegalForm.BV'] = 'Limited company';

@@ -9,7 +9,7 @@ This is a module for Blesta that integrates with [Internet.bs](https://internetb
 1. You can install the module via composer:
 
     ```
-    composer require parent_repository/internetbs
+    composer require blesta/internetbs
     ```
 
 2. OR upload the source code to a /components/modules/internetbs/ directory within
