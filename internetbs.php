@@ -382,7 +382,7 @@ class Internetbs extends RegistrarModule
         $checkbox_fields = ['epp_code'];
         foreach ($checkbox_fields as $checkbox_field) {
             if (!isset($vars['meta'][$checkbox_field])) {
-                $vars['meta'][$checkbox_field] = 'false';
+                $vars['meta'][$checkbox_field] = '0';
             }
         }
 
@@ -431,7 +431,7 @@ class Internetbs extends RegistrarModule
         $checkbox_fields = ['epp_code'];
         foreach ($checkbox_fields as $checkbox_field) {
             if (!isset($vars['meta'][$checkbox_field])) {
-                $vars['meta'][$checkbox_field] = 'false';
+                $vars['meta'][$checkbox_field] = '0';
             }
         }
 
@@ -468,7 +468,7 @@ class Internetbs extends RegistrarModule
             'meta[epp_code]' => [
                 'format' => [
                     'ifset' => true,
-                    'rule' => ['in_array', ['true', 'false']],
+                    'rule' => ['in_array', [0, 1]],
                     'message' => Language::_('Internetbs.!error.meta[epp_code].format', true)
                 ]
             ]
@@ -520,8 +520,8 @@ class Internetbs extends RegistrarModule
         $epp_code->attach(
             $fields->fieldCheckbox(
                 'meta[epp_code]',
-                'true',
-                ($vars->meta['epp_code'] ?? null) == 'true',
+                '1',
+                ($vars->meta['epp_code'] ?? null) == '1',
                 ['id' => 'internetbs_epp_code']
             )
         );
@@ -972,11 +972,11 @@ class Internetbs extends RegistrarModule
         // Format TLD-specific fields
         $tld_fields = (array) Configure::get('Internetbs.domain_fields' . $tld);
         $contact_types = ['Registrant', 'Admin', 'Technical', 'Billing'];
-        foreach ($contact_types as $contact_type) {
-            foreach ($tld_fields as $field_name => $field) {
+        foreach ($tld_fields as $field_name => $field) {
+            foreach ($contact_types as $contact_type) {
                 $vars[$contact_type . '_' . $field_name] = $vars[$field_name];
-                unset($vars[$field_name]);
             }
+            unset($vars[$field_name]);
         }
 
         return $vars;
@@ -2327,7 +2327,7 @@ class Internetbs extends RegistrarModule
         $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
         $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
-        return date(strtotime($domain_info->expirationdate), $format);
+        return date($format, strtotime($domain_info->expirationdate));
     }
 
     /**
@@ -2492,6 +2492,13 @@ class Internetbs extends RegistrarModule
         // Get remote price list
         if (!isset($response)) {
             $row = $this->getModuleRow($module_row_id);
+            if (!$row) {
+                $rows = $this->getModuleRows();
+                if (isset($rows[0])) {
+                    $row = $rows[0];
+                }
+                unset($rows);
+            }
             $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
 
             // Load API command

@@ -32,7 +32,7 @@ $lang['Internetbs.manage.module_groups.edit'] = 'Edit';
 $lang['Internetbs.manage.module_groups.delete'] = 'Delete';
 $lang['Internetbs.manage.module_groups.confirm_delete'] = 'Are you sure you want to delete this Account Group';
 
-$lang['Internetbs.manage.module_groups.no_results'] = 'There is no Account Groups';
+$lang['Internetbs.manage.module_groups.no_results'] = 'There are no Account Groups';
 
 $lang['Internetbs.order_options.roundrobin'] = 'Evenly Distribute Among Servers';
 $lang['Internetbs.order_options.first'] = 'First Non-full Server';
