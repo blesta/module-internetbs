@@ -120,7 +120,7 @@ class InternetbsApi
         }
 
         // Save last request
-        $this->last_request = ['url' => $url, 'args' => array_merge($args, ['Password' => '***'])];
+        $this->last_request = ['url' => $url, 'args' => array_merge($args, ['ApiKey' => '***', 'Password' => '***'])];
         $result = curl_exec($curl);
 
         if (curl_errno($curl) || $result == false) {
