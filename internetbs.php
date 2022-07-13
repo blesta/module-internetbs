@@ -321,16 +321,7 @@ class Internetbs extends RegistrarModule
 
             // List the domains
             $response = $command->list();
-
-            // Set errors, if any
-            if ($response->status() != 200) {
-                $errors = $response->errors() ?? [];
-                $this->Input->setErrors(['errors' => (array) $errors]);
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+            $this->processResponse($api, $response);
 
             return ($response->status() == 200);
         } catch (Exception $e) {
@@ -822,16 +813,7 @@ class Internetbs extends RegistrarModule
                 $params['Period'] = $params['Period'] . 'Y';
 
                 $response = $command->renew($params);
-
-                // Set errors, if any
-                if ($response->status() != 200) {
-                    $errors = $response->errors() ?? [];
-                    $this->Input->setErrors(['errors' => (array) $errors]);
-                }
-
-                $last_request = $api->lastRequest();
-                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+                $this->processResponse($api, $response);
             }
         }
 
@@ -1455,17 +1437,9 @@ class Internetbs extends RegistrarModule
 
             // List domain rules
             $response = $command->list(['Domain' => $service_fields->domain]);
+            $this->processResponse($api, $response);
+
             $domain_rules = $response->response();
-
-            // Set errors, if any
-            if ($response->status() != 200) {
-                $errors = $response->errors() ?? [];
-                $this->Input->setErrors(['errors' => (array) $errors]);
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
             unset($response);
         } catch (Throwable $e) {
@@ -1486,14 +1460,7 @@ class Internetbs extends RegistrarModule
 
         // Set errors, if any
         if (isset($response)) {
-            if ($response->status() != 200) {
-                $errors = $response->errors() ?? [];
-                $this->Input->setErrors(['errors' => (array) $errors]);
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+            $this->processResponse($api, $response);
         }
 
         $this->view->set('service_fields', $service_fields);
@@ -1543,17 +1510,9 @@ class Internetbs extends RegistrarModule
 
             // List domain rules
             $response = $command->list(['Domain' => $service_fields->domain]);
+            $this->processResponse($api, $response);
+
             $domain_rules = $response->response();
-
-            // Set errors, if any
-            if ($response->status() != 200) {
-                $errors = $response->errors() ?? [];
-                $this->Input->setErrors(['errors' => (array) $errors]);
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
         } catch (Throwable $e) {
             $this->Input->setErrors(['errors' => ['url_forwarding' => $e->getMessage()]]);
         }
@@ -1572,14 +1531,7 @@ class Internetbs extends RegistrarModule
 
             // Set errors, if any
             if (isset($response)) {
-                if ($response->status() != 200) {
-                    $errors = $response->errors() ?? [];
-                    $this->Input->setErrors(['errors' => (array) $errors]);
-                }
-
-                $last_request = $api->lastRequest();
-                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+                $this->processResponse($api, $response);
             }
 
             $vars = (object) $post;
@@ -1632,17 +1584,9 @@ class Internetbs extends RegistrarModule
 
             // List domain rules
             $response = $command->list(['Domain' => $service_fields->domain]);
+            $this->processResponse($api, $response);
+
             $domain_rules = $response->response();
-
-            // Set errors, if any
-            if ($response->status() != 200) {
-                $errors = $response->errors() ?? [];
-                $this->Input->setErrors(['errors' => (array) $errors]);
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
             unset($response);
         } catch (Throwable $e) {
@@ -1663,14 +1607,7 @@ class Internetbs extends RegistrarModule
 
         // Set errors, if any
         if (isset($response)) {
-            if ($response->status() != 200) {
-                $errors = $response->errors() ?? [];
-                $this->Input->setErrors(['errors' => (array) $errors]);
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+            $this->processResponse($api, $response);
         }
 
         $this->view->set('service_fields', $service_fields);
@@ -1720,17 +1657,9 @@ class Internetbs extends RegistrarModule
 
             // List domain rules
             $response = $command->list(['Domain' => $service_fields->domain]);
+            $this->processResponse($api, $response);
+
             $domain_rules = $response->response();
-
-            // Set errors, if any
-            if ($response->status() != 200) {
-                $errors = $response->errors() ?? [];
-                $this->Input->setErrors(['errors' => (array) $errors]);
-            }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
         } catch (Throwable $e) {
             $this->Input->setErrors(['errors' => ['email_forwarding' => $e->getMessage()]]);
         }
@@ -1749,14 +1678,7 @@ class Internetbs extends RegistrarModule
 
             // Set errors, if any
             if (isset($response)) {
-                if ($response->status() != 200) {
-                    $errors = $response->errors() ?? [];
-                    $this->Input->setErrors(['errors' => (array) $errors]);
-                }
-
-                $last_request = $api->lastRequest();
-                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+                $this->processResponse($api, $response);
             }
 
             $vars = (object) $post;
@@ -1830,15 +1752,7 @@ class Internetbs extends RegistrarModule
                     $response = $command->privateWhoisDisable(['Domain' => $service_fields->domain]);
                 }
 
-                // Set errors, if any
-                if (isset($response) && $response->status() != 200) {
-                    $errors = $response->errors() ?? [];
-                    $this->Input->setErrors(['errors' => (array) $errors]);
-                }
-
-                $last_request = $api->lastRequest();
-                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+                $this->processResponse($api, $response);
             }
         }
 
@@ -1914,15 +1828,7 @@ class Internetbs extends RegistrarModule
                     $response = $command->privateWhoisDisable(['Domain' => $service_fields->domain]);
                 }
 
-                // Set errors, if any
-                if (isset($response) && $response->status() != 200) {
-                    $errors = $response->errors() ?? [];
-                    $this->Input->setErrors(['errors' => (array) $errors]);
-                }
-
-                $last_request = $api->lastRequest();
-                $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-                $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+                $this->processResponse($api, $response);
             }
         }
 
@@ -2232,17 +2138,9 @@ class Internetbs extends RegistrarModule
 
         // Check if domain is available
         $response = $command->check(['Domain' => $domain]);
+        $this->processResponse($api, $response);
+
         $domain_availability = $response->response();
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
         return ($domain_availability->status ?? 'UNAVAILABLE') !== 'UNAVAILABLE';
     }
@@ -2279,17 +2177,9 @@ class Internetbs extends RegistrarModule
 
         // Get domain info
         $response = $command->info(['Domain' => $domain]);
+        $this->processResponse($api, $response);
+
         $domain_info = $response->response();
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
         return (array) $domain_info;
     }
@@ -2315,17 +2205,9 @@ class Internetbs extends RegistrarModule
 
         // Get domain info
         $response = $command->info(['Domain' => $domain]);
+        $this->processResponse($api, $response);
+
         $domain_info = $response->response();
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
         return date($format, strtotime($domain_info->expirationdate));
     }
@@ -2507,6 +2389,7 @@ class Internetbs extends RegistrarModule
             // Get domain price list
             $price_list = $command->getPriceList(['version' => 2]);
             $response = $price_list->response();
+            $this->processResponse($api, $response);
 
             // Save pricing in cache
             if (Configure::get('Caching.on') && is_writable(CACHEDIR)) {
@@ -2522,10 +2405,6 @@ class Internetbs extends RegistrarModule
                     Configure::set('Caching.on', false);
                 }
             }
-
-            $last_request = $api->lastRequest();
-            $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-            $this->log($last_request['url'], $price_list->raw(), 'output', $price_list->status() == 200);
         }
 
         return $response;
@@ -2554,16 +2433,7 @@ class Internetbs extends RegistrarModule
             'Domain' => $domain,
             'Period' => isset($vars['qty']) ? ($vars['qty'] . 'Y') : '1Y'
         ], $vars));
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -2591,16 +2461,7 @@ class Internetbs extends RegistrarModule
             'Domain' => $domain,
             'Period' => isset($vars['qty']) ? ($vars['qty'] . 'Y') : '1Y'
         ]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -2630,16 +2491,7 @@ class Internetbs extends RegistrarModule
             'senderEmail' => 'noreply@' . Configure::get('Blesta.company')->hostname,
             'senderName' => Configure::get('Blesta.company')->name
         ]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -2687,6 +2539,8 @@ class Internetbs extends RegistrarModule
         ];
 
         $response = $command->info(['Domain' => $domain]);
+        $this->processResponse($api, $response);
+
         $domain_info = $response->response();
 
         $contacts = [];
@@ -2711,16 +2565,6 @@ class Internetbs extends RegistrarModule
             }
         }
 
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
-
         return $contacts;
     }
 
@@ -2741,17 +2585,9 @@ class Internetbs extends RegistrarModule
 
         // Get lock status
         $response = $command->lockStatus(['Domain' => $domain]);
+        $this->processResponse($api, $response);
+
         $status = $response->response();
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
         return ($status->registrar_lock_status == 'LOCKED');
     }
@@ -2780,6 +2616,8 @@ class Internetbs extends RegistrarModule
             'CompactList' => 'no',
             'ReturnFields' => 'NSList'
         ]);
+        $this->processResponse($api, $response);
+
         $domain_info = $response->response();
 
         // Get current domain
@@ -2808,16 +2646,6 @@ class Internetbs extends RegistrarModule
             }
         }
 
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
-
         return $ns_list;
     }
 
@@ -2838,16 +2666,7 @@ class Internetbs extends RegistrarModule
 
         // Lock domain
         $response = $command->lock(['Domain' => $domain]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -2869,16 +2688,7 @@ class Internetbs extends RegistrarModule
 
         // Resend authorization email
         $response = $command->resendAuthEmail(['Domain' => $domain]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -2903,16 +2713,7 @@ class Internetbs extends RegistrarModule
 
         // Restore domain
         $response = $command->restore(['Domain' => $domain]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -2996,16 +2797,7 @@ class Internetbs extends RegistrarModule
         $response = $command->update(array_merge([
             'Domain' => $domain
         ], $contacts));
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -3031,16 +2823,7 @@ class Internetbs extends RegistrarModule
             'Domain' => $domain,
             'Ns_list' => count($vars) > 1 ? implode(',', $vars) : reset($vars)
         ]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -3068,17 +2851,8 @@ class Internetbs extends RegistrarModule
                 'Host' => $host,
                 'IP_List' => count($ip_list) > 1 ? implode(',', $ip_list) : reset($ip_list)
             ]);
+            $this->processResponse($api, $response);
         }
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
 
         return ($response->status() == 200);
     }
@@ -3100,16 +2874,7 @@ class Internetbs extends RegistrarModule
 
         // Unlock domain
         $response = $command->unlock(['Domain' => $domain]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -3138,16 +2903,7 @@ class Internetbs extends RegistrarModule
             'Domain' => $domain,
             'transferAuthInfo' => $epp_code
         ]);
-
-        // Set errors, if any
-        if ($response->status() != 200) {
-            $errors = $response->errors() ?? [];
-            $this->Input->setErrors(['errors' => (array) $errors]);
-        }
-
-        $last_request = $api->lastRequest();
-        $this->log($last_request['url'], serialize($last_request['args']), 'input', true);
-        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+        $this->processResponse($api, $response);
 
         return ($response->status() == 200);
     }
@@ -3206,5 +2962,24 @@ class Internetbs extends RegistrarModule
         Loader::load(dirname(__FILE__) . DS . 'apis' . DS . 'internetbs_api.php');
 
         return new InternetbsApi($api_key, $password, $sandbox == 'true');
+    }
+
+    /**
+     * Process API response, setting an errors, and logging the request
+     *
+     * @param InternetbsApi $api The Internet.bs API object
+     * @param InternetbsResponse $response The Internet.bs API response object
+     */
+    private function processResponse(InternetbsApi $api, InternetbsResponse $response)
+    {
+        // Set errors, if any
+        if ($response->status() != 200) {
+            $errors = $response->errors() ?? [];
+            $this->Input->setErrors(['errors' => (array) $errors]);
+        }
+
+        $last_request = $api->lastRequest();
+        $this->log($last_request['url'], serialize($last_request['args'] ?? []), 'input', true);
+        $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
     }
 }
