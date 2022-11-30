@@ -2209,7 +2209,9 @@ class Internetbs extends RegistrarModule
 
         $domain_info = $response->response();
 
-        return date($format, strtotime($domain_info->expirationdate));
+        return isset($domain_info->expirationdate)
+            ? date($format, strtotime($domain_info->expirationdate))
+            : false;
     }
 
     /**
