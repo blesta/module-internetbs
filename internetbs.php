@@ -2390,8 +2390,8 @@ class Internetbs extends RegistrarModule
 
             // Get domain price list
             $price_list = $command->getPriceList(['version' => 2]);
+            $this->processResponse($api, $price_list);
             $response = $price_list->response();
-            $this->processResponse($api, $response);
 
             // Save pricing in cache
             if (Configure::get('Caching.on') && is_writable(CACHEDIR)) {
