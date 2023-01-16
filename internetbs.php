@@ -2394,7 +2394,10 @@ class Internetbs extends RegistrarModule
             $response = $price_list->response();
 
             // Save pricing in cache
-            if (Configure::get('Caching.on') && is_writable(CACHEDIR)) {
+            if (Configure::get('Caching.on')
+                && is_writable(CACHEDIR)
+                && $response->status() == 200
+            ) {
                 try {
                     Cache::writeCache(
                         'tlds_prices',
