@@ -2262,6 +2262,10 @@ class Internetbs extends RegistrarModule
     {
         $response = $this->getRawTldData($module_row_id);
 
+        if (!$response) {
+            return [];
+        }
+
         // Get all currencies
         Loader::loadModels($this, ['Currencies']);
 
@@ -2396,7 +2400,7 @@ class Internetbs extends RegistrarModule
             // Save pricing in cache
             if (Configure::get('Caching.on')
                 && is_writable(CACHEDIR)
-                && $response->status() == 200
+                && $price_list->status() == 200
             ) {
                 try {
                     Cache::writeCache(
