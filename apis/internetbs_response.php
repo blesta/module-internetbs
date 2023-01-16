@@ -11,7 +11,7 @@ class InternetbsResponse
     private $status;
     private $raw;
     private $response;
-    private $errors;
+    private $errors = [];
     private $headers;
 
     /**
@@ -36,7 +36,7 @@ class InternetbsResponse
 
         // Set errors
         $this->errors = [];
-        if ($this->response->status == 'FAILURE' && isset($this->response->message)) {
+        if ($this->response && $this->response->status == 'FAILURE' && isset($this->response->message)) {
             $this->status = (int) $this->response->code ?? 500;
             $this->errors[$this->status] = $this->response->message;
         }
