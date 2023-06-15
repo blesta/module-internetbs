@@ -2274,6 +2274,7 @@ class Internetbs extends RegistrarModule
         foreach ($company_currencies as $currency) {
             $currencies[$currency->code] = $currency;
         }
+        $response->currency = $response->currency ?? 'USD';
 
         // Format pricing
         $tld_yearly_prices = [];
@@ -2283,7 +2284,7 @@ class Internetbs extends RegistrarModule
             'renewal' => 'renew'
         ];
 
-        foreach ($response->product as $product) {
+        foreach ($response->product ?? [] as $product) {
             // Skip if the product doesn't have any pricing
             if (empty($product->period)) {
                 continue;
@@ -2305,11 +2306,8 @@ class Internetbs extends RegistrarModule
                 continue;
             }
 
-            // Get currency
-            $currency = $response->currency ?? 'USD';
-
             // Validate if the reseller currency exists in the company
-            if (!isset($currencies[$currency])) {
+            if (!isset($currencies[$response->currency])) {
                 $this->Input->setErrors(
                     [
                         'currency' => [
@@ -2321,13 +2319,13 @@ class Internetbs extends RegistrarModule
                 return;
             }
 
-            foreach ($product->period as $duration => $price_per_year) {
+            foreach ($product->period ?? [] as $duration => $price_per_year) {
                 // Filter by 'terms'
                 if (isset($filters['terms']) && !in_array($duration, $filters['terms'])) {
                     continue;
                 }
 
-                foreach ($currencies as $currency) {
+                foreach ($currencies ?? [] as $currency) {
                     // Filter by 'currencies'
                     if (isset($filters['currencies']) && !in_array($currency->code, $filters['currencies'])) {
                         continue;
@@ -2347,7 +2345,7 @@ class Internetbs extends RegistrarModule
 
                     $tld_yearly_prices[$tld][$currency->code][$duration][$categories[$product->operation]] = $this->Currencies->convert(
                         $price_per_year * $duration,
-                        $response->currency ?? 'USD',
+                        $response->currency,
                         $currency->code,
                         Configure::get('Blesta.company_id')
                     );
