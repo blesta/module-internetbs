@@ -1329,7 +1329,7 @@ class Internetbs extends RegistrarModule
 
         // Update nameservers
         if (!empty($post)) {
-            $this->setDomainNameservers($service_fields->domain, $service->module_row_id, (array) $vars);
+            $this->setDomainNameservers($service_fields->domain, $service->module_row_id, $post);
 
             $vars = (object) $post;
         }
@@ -1385,7 +1385,7 @@ class Internetbs extends RegistrarModule
 
         // Update nameservers
         if (!empty($post)) {
-            $this->setDomainNameservers($service_fields->domain, $service->module_row_id, (array) $vars);
+            $this->setDomainNameservers($service_fields->domain, $service->module_row_id, $post);
 
             $vars = (object) $post;
         }
