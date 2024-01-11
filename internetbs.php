@@ -896,6 +896,13 @@ class Internetbs extends RegistrarModule
             ]
         ];
 
+        // Remove validation rules for optional fields
+        for ($i = 1; $i <= 5; $i++) {
+            if (isset($vars['ns' . $i]) && empty($vars['ns' . $i])) {
+                unset($rules['ns' . $i]);
+            }
+        }
+
         return $rules;
     }
 
