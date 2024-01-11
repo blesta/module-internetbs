@@ -861,51 +861,40 @@ class Internetbs extends RegistrarModule
         $rules = [
             'ns1' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns1.valid', true)
                 ]
             ],
             'ns2' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns2.valid', true)
                 ]
             ],
             'ns3' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns3.valid', true)
                 ]
             ],
             'ns4' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns4.valid', true)
                 ]
             ],
             'ns5' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns5.valid', true)
                 ]
             ]
         ];
-
-        // Remove validation rules for optional fields
-        if (isset($vars['ns3']) && empty($vars['ns3'])) {
-            unset($rules['ns3']);
-        }
-        if (isset($vars['ns4']) && empty($vars['ns4'])) {
-            unset($rules['ns4']);
-        }
-        if (isset($vars['ns5']) && empty($vars['ns5'])) {
-            unset($rules['ns5']);
-        }
 
         return $rules;
     }
@@ -922,6 +911,10 @@ class Internetbs extends RegistrarModule
         // Set nameservers list
         $vars['Ns_list'] = '';
         for ($i = 1; $i <= 5; $i++) {
+            if (empty($vars['ns' . $i])) {
+                $vars['ns' . $i] = $package->meta->ns[$i - 1] ?? '';
+            }
+
             $vars['Ns_list'] .= $vars['ns' . $i] . ',';
             unset($vars['ns' . $i]);
         }
