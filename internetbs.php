@@ -720,8 +720,13 @@ class Internetbs extends RegistrarModule
             // Get request fields
             $params = $this->getFieldsFromInput((array) $vars, $package);
 
-            // Register domain
-            $this->registerDomain($vars['Domain'], $row->id ?? null, $params);
+            // Register or transfer domain
+            if (isset($vars['transfer']) || isset($vars['transferAuthInfo'])) {
+                $vars['epp_code'] = $vars['transferAuthInfo'] ?? null;
+                $this->transferDomain($vars['Domain'], $row->id ?? null, $params);
+            } else {
+                $this->registerDomain($vars['Domain'], $row->id ?? null, $params);
+            }
         }
 
         // Return service fields
