@@ -720,8 +720,12 @@ class Internetbs extends RegistrarModule
             // Get request fields
             $params = $this->getFieldsFromInput((array) $vars, $package);
 
-            // Register domain
-            $this->registerDomain($vars['Domain'], $row->id ?? null, $params);
+            // Register or transfer domain
+            if (isset($vars['transfer']) || isset($vars['transferAuthInfo'])) {
+                $this->transferDomain($vars['Domain'], $row->id ?? null, $params);
+            } else {
+                $this->registerDomain($vars['Domain'], $row->id ?? null, $params);
+            }
         }
 
         // Return service fields
@@ -861,35 +865,35 @@ class Internetbs extends RegistrarModule
         $rules = [
             'ns1' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns1.valid', true)
                 ]
             ],
             'ns2' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns2.valid', true)
                 ]
             ],
             'ns3' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns3.valid', true)
                 ]
             ],
             'ns4' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns4.valid', true)
                 ]
             ],
             'ns5' => [
                 'valid' => [
-                    'if_set' => $edit,
+                    'if_set' => true,
                     'rule' => [[$this, 'validateHostName'], true],
                     'message' => Language::_('Internetbs.!error.ns5.valid', true)
                 ]
@@ -897,14 +901,10 @@ class Internetbs extends RegistrarModule
         ];
 
         // Remove validation rules for optional fields
-        if (isset($vars['ns3']) && empty($vars['ns3'])) {
-            unset($rules['ns3']);
-        }
-        if (isset($vars['ns4']) && empty($vars['ns4'])) {
-            unset($rules['ns4']);
-        }
-        if (isset($vars['ns5']) && empty($vars['ns5'])) {
-            unset($rules['ns5']);
+        for ($i = 1; $i <= 5; $i++) {
+            if (isset($vars['ns' . $i]) && empty($vars['ns' . $i])) {
+                unset($rules['ns' . $i]);
+            }
         }
 
         return $rules;
@@ -922,6 +922,10 @@ class Internetbs extends RegistrarModule
         // Set nameservers list
         $vars['Ns_list'] = '';
         for ($i = 1; $i <= 5; $i++) {
+            if (empty($vars['ns' . $i])) {
+                $vars['ns' . $i] = $package->meta->ns[$i - 1] ?? '';
+            }
+
             $vars['Ns_list'] .= $vars['ns' . $i] . ',';
             unset($vars['ns' . $i]);
         }
@@ -932,18 +936,38 @@ class Internetbs extends RegistrarModule
             $vars['Period'] = $vars['Period'] . 'Y';
         }
 
+        // Set EPP code
+        if (isset($vars['epp_code'])) {
+            $vars['transferAuthInfo'] = $vars['epp_code'];
+            unset($vars['epp_code']);
+        }
+
         // Remove unsupported parameters
         $tld = $this->getTld($vars['Domain'] ?? '');
         $domain_field_basics = [
-            'Domain' => true,
             'Period' => true,
             'Ns_list' => true
         ];
-        $supported_fields = array_keys(array_merge(
-            Configure::get('Internetbs.whois_fields'), Configure::get('Internetbs.transfer_fields'),
-            Configure::get('Internetbs.domain_fields'), (array) Configure::get('Internetbs.domain_fields' . $tld),
-            Configure::get('Internetbs.nameserver_fields'), $domain_field_basics
-        ));
+
+        if (isset($vars['epp_code']) || isset($vars['transferAuthInfo'])) {
+            $supported_fields = array_keys(
+                array_merge(
+                    Configure::get('Internetbs.whois_fields'),
+                    Configure::get('Internetbs.transfer_fields'),
+                    Configure::get('Internetbs.domain_fields' . $tld)
+                )
+            );
+        } else {
+            $supported_fields = array_keys(
+                array_merge(
+                    Configure::get('Internetbs.whois_fields'),
+                    Configure::get('Internetbs.domain_fields'),
+                    Configure::get('Internetbs.domain_fields' . $tld),
+                    Configure::get('Internetbs.nameserver_fields'),
+                    $domain_field_basics
+                )
+            );
+        }
 
         foreach ($vars as $key => $value) {
             if (!in_array($key, $supported_fields)) {
@@ -956,9 +980,11 @@ class Internetbs extends RegistrarModule
         $contact_types = ['Registrant', 'Admin', 'Technical', 'Billing'];
         foreach ($tld_fields as $field_name => $field) {
             foreach ($contact_types as $contact_type) {
-                $vars[$contact_type . '_' . $field_name] = $vars[$field_name];
+                if (isset($vars[$field_name])) {
+                    $vars[$contact_type . '_' . $field_name] = $vars[$field_name];
+                    unset($vars[$field_name]);
+                }
             }
-            unset($vars[$field_name]);
         }
 
         return $vars;
@@ -1871,13 +1897,18 @@ class Internetbs extends RegistrarModule
         }
 
         // Handle transfer request
+        $tld = $this->getTld($vars->domain ?? '');
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
-            return $this->arrayToModuleFields(Configure::get('Internetbs.transfer_fields'), null, $vars);
+            return $this->arrayToModuleFields(array_merge(
+                Configure::get('Internetbs.transfer_fields'),
+                Configure::get('Internetbs.domain_fields' . $tld)
+            ), null, $vars);
         } else {
             // Handle domain registration
             $fields = array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
-                Configure::get('Internetbs.domain_fields')
+                Configure::get('Internetbs.domain_fields'),
+                Configure::get('Internetbs.domain_fields' . $tld)
             );
             $module_fields = $this->arrayToModuleFields($fields, null, $vars);
 
@@ -1916,8 +1947,12 @@ class Internetbs extends RegistrarModule
         }
 
         // Handle transfer request
+        $tld = $this->getTld($vars->domain ?? '');
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
-            $fields = Configure::get('Internetbs.transfer_fields');
+            $fields = array_merge(
+                Configure::get('Internetbs.transfer_fields'),
+                Configure::get('Internetbs.domain_fields' . $tld)
+            );
 
             // We should already have the domain name don't make editable
             $fields['Domain']['type'] = 'hidden';
@@ -1928,7 +1963,8 @@ class Internetbs extends RegistrarModule
             // Handle domain registration
             $fields = array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
-                Configure::get('Internetbs.domain_fields')
+                Configure::get('Internetbs.domain_fields'),
+                Configure::get('Internetbs.domain_fields' . $tld)
             );
             $module_fields = $this->arrayToModuleFields($fields, null, $vars);
 
@@ -1971,8 +2007,12 @@ class Internetbs extends RegistrarModule
         }
 
         // Handle transfer request
+        $tld = $this->getTld($vars->domain ?? '');
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
-            $fields = Configure::get('Internetbs.transfer_fields');
+            $fields = array_merge(
+                Configure::get('Internetbs.transfer_fields'),
+                Configure::get('Internetbs.domain_fields' . $tld)
+            );
 
             // We should already have the domain name don't make editable
             $fields['Domain']['type'] = 'hidden';
@@ -1983,7 +2023,8 @@ class Internetbs extends RegistrarModule
             // Handle domain registration
             $fields = array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
-                Configure::get('Internetbs.domain_fields')
+                Configure::get('Internetbs.domain_fields'),
+                Configure::get('Internetbs.domain_fields' . $tld)
             );
 
             // We should already have the domain name don't make editable
@@ -2522,12 +2563,12 @@ class Internetbs extends RegistrarModule
         $command = new InternetbsDomain($api);
 
         // Transfer domain
-        $response = $command->transfer([
+        $response = $command->transfer(array_merge([
             'Domain' => $domain,
-            'transferAuthInfo' => $vars['epp_code'] ?? '',
+            'transferAuthInfo' => $vars['transferAuthInfo'] ?? '',
             'senderEmail' => 'noreply@' . Configure::get('Blesta.company')->hostname,
             'senderName' => Configure::get('Blesta.company')->name
-        ]);
+        ], $vars));
         $this->processResponse($api, $response);
 
         return ($response->status() == 200);
