@@ -2226,6 +2226,36 @@ class Internetbs extends RegistrarModule
     }
 
     /**
+     * Gets the domain registration date
+     *
+     * @param stdClass $service The service belonging to the domain to lookup
+     * @param string $format The format to return the registration date in
+     * @return string The domain registration date in UTC time in the given format
+     * @see Services::get()
+     */
+    public function getRegistrationDate($service, $format = 'Y-m-d H:i:s')
+    {
+        $domain = $this->getServiceDomain($service);
+        $module_row_id = $service->module_row_id ?? null;
+
+        $row = $this->getModuleRow($module_row_id);
+        $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
+
+        // Load API command
+        $command = new InternetbsDomain($api);
+
+        // Get domain info
+        $response = $command->info(['Domain' => $domain]);
+        $this->processResponse($api, $response);
+
+        $domain_info = $response->response();
+
+        return isset($domain_info->registrationdate)
+            ? date($format, strtotime($domain_info->registrationdate))
+            : false;
+    }
+
+    /**
      * Gets the domain expiration date
      *
      * @param stdClass $service The service belonging to the domain to lookup
