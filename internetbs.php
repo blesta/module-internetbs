@@ -954,7 +954,7 @@ class Internetbs extends RegistrarModule
                 array_merge(
                     Configure::get('Internetbs.whois_fields'),
                     Configure::get('Internetbs.transfer_fields'),
-                    Configure::get('Internetbs.domain_fields' . $tld)
+                    (array) Configure::get('Internetbs.domain_fields' . $tld)
                 )
             );
         } else {
@@ -962,7 +962,7 @@ class Internetbs extends RegistrarModule
                 array_merge(
                     Configure::get('Internetbs.whois_fields'),
                     Configure::get('Internetbs.domain_fields'),
-                    Configure::get('Internetbs.domain_fields' . $tld),
+                    (array) Configure::get('Internetbs.domain_fields' . $tld),
                     Configure::get('Internetbs.nameserver_fields'),
                     $domain_field_basics
                 )
@@ -1041,7 +1041,6 @@ class Internetbs extends RegistrarModule
 
         // Check if DNS Management is enabled
         if (!$this->featureServiceEnabled('dns_management', $service)) {
-            unset($tabs['tabClientNameservers']);
             unset($tabs['tabClientUrlForwarding']);
         }
 
@@ -1072,7 +1071,6 @@ class Internetbs extends RegistrarModule
 
         // Check if DNS Management is enabled
         if (!$this->featureServiceEnabled('dns_management', $service)) {
-            unset($tabs['tabNameservers']);
             unset($tabs['tabUrlForwarding']);
         }
 
@@ -1901,14 +1899,14 @@ class Internetbs extends RegistrarModule
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
             return $this->arrayToModuleFields(array_merge(
                 Configure::get('Internetbs.transfer_fields'),
-                Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld)
             ), null, $vars);
         } else {
             // Handle domain registration
             $fields = array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
                 Configure::get('Internetbs.domain_fields'),
-                Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld)
             );
             $module_fields = $this->arrayToModuleFields($fields, null, $vars);
 
@@ -1951,7 +1949,7 @@ class Internetbs extends RegistrarModule
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
             $fields = array_merge(
                 Configure::get('Internetbs.transfer_fields'),
-                Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld)
             );
 
             // We should already have the domain name don't make editable
@@ -1964,7 +1962,7 @@ class Internetbs extends RegistrarModule
             $fields = array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
                 Configure::get('Internetbs.domain_fields'),
-                Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld)
             );
             $module_fields = $this->arrayToModuleFields($fields, null, $vars);
 
@@ -2011,7 +2009,7 @@ class Internetbs extends RegistrarModule
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
             $fields = array_merge(
                 Configure::get('Internetbs.transfer_fields'),
-                Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld)
             );
 
             // We should already have the domain name don't make editable
@@ -2024,7 +2022,7 @@ class Internetbs extends RegistrarModule
             $fields = array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
                 Configure::get('Internetbs.domain_fields'),
-                Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld)
             );
 
             // We should already have the domain name don't make editable
@@ -2056,7 +2054,7 @@ class Internetbs extends RegistrarModule
         if (isset($vars->Domain)) {
             $tld = $this->getTld($vars->Domain);
 
-            $extension_fields = Configure::get('Internetbs.domain_fields' . $tld);
+            $extension_fields = (array) Configure::get('Internetbs.domain_fields' . $tld);
             if ($extension_fields) {
                 // Set the fields
                 if ($client) {
