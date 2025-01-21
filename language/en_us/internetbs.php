@@ -324,6 +324,7 @@ $lang['Internetbs.!tooltip.dotFRContactEntityDateOfPublication'] = 'The date mus
 // WHOIS Fields
 $lang['Internetbs.whois.Registrant_FirstName'] = 'First Name';
 $lang['Internetbs.whois.Registrant_LastName'] = 'Last Name';
+$lang['Internetbs.whois.Registrant_Organization'] = 'Organization';
 $lang['Internetbs.whois.Registrant_Email'] = 'Email Address';
 $lang['Internetbs.whois.Registrant_PhoneNumber'] = 'Phone Number';
 $lang['Internetbs.whois.Registrant_Street'] = 'Address';

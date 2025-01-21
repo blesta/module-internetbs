@@ -648,6 +648,9 @@ class Internetbs extends RegistrarModule
                     case 'Billing_LastName':
                         $vars[$key] = $client->last_name;
                         break;
+                    case 'Registrant_Organization':
+                        $vars[$key] = !empty($client->company) ? $client->company : '';
+                        break;
                     case 'Registrant_Email':
                     case 'Admin_Email':
                     case 'Technical_Email':
