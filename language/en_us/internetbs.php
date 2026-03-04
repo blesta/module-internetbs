@@ -9,6 +9,7 @@ $lang['Internetbs.module_row'] = 'Account';
 $lang['Internetbs.module_row_plural'] = 'Accounts';
 $lang['Internetbs.module_group'] = 'Account Group';
 
+$lang['Internetbs.back_to_manage'] = 'Back';
 
 // Module management
 $lang['Internetbs.add_module_row'] = 'Add Account';
