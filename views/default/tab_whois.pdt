@@ -1,50 +1,49 @@
 <?php /** @var View $this **/ ?>
 
 <?php
-    $this->Form->create();
+$this->Form->create();
 
-    foreach ($whois_fields ?? [] as $name => $field) {
-        if ($field['type'] == 'hidden') {
-            call_user_func_array([$this->Form, $field['type']], [$name, ($vars->{$name} ?? $field['options'] ?? '')]);
-        }
+foreach ($whois_fields ?? [] as $name => $field) {
+    if ($field['type'] == 'hidden') {
+        call_user_func_array([$this->Form, $field['type']], [$name, $vars->{$name} ?? ($field['options'] ?? '')]);
     }
+}
 
-    $i = 0;
-    foreach ($sections ?? [] as $index => $key) {
-    ?>
-<h6 class="form-section-header<?php echo ($i == 0 ? ' first' : '');?>>"><?php $this->_('Internetbs.tab_whois.section_' . $key);?></h6>
+$i = 0;
+foreach ($sections ?? [] as $index => $key) { ?>
+<h6 class="form-section-header<?php echo $i == 0 ? ' first' : ''; ?>>"><?php $this->_(
+    'Internetbs.tab_whois.section_' . $key,
+); ?></h6>
 
 <div>
-    <?php
+    <?php foreach ($whois_fields ?? [] as $name => $field) {
 
-            foreach ($whois_fields ?? [] as $name => $field) {
-                if (!str_contains($name, $key)) {
-                    continue;
-                }
+        if (!str_contains($name, $key)) {
+            continue;
+        }
 
-                $name = ltrim(str_replace($key, '', $name), '_');
-            ?>
+        $name = ltrim(str_replace($key, '', $name), '_');
+        ?>
     <div class="mb-3">
     <?php
-
-                $this->Form->label($field['label'], $name, ['class' => 'form-label']);
-                $this->Form->fieldText($key . '[' . $name . ']', ($vars->{$key}[$name] ?? ''), ['id' => $name, 'class' => 'form-control', 'placeholder' => $field['label']]);
-                ?>
+    $this->Form->label($field['label'], $name, ['class' => 'form-label']);
+    $this->Form->fieldText($key . '[' . $name . ']', $vars->{$key}[$name] ?? '', [
+        'id' => $name,
+        'class' => 'form-control',
+        'placeholder' => $field['label'],
+    ]);
+    ?>
     </div>
     <?php
-            }
-            ?>
+    } ?>
 </div>
-<?php
-    }
-    ?>
+<?php }
+?>
 
 <div class="d-flex justify-content-end">
-    <?php
-
-        $this->Form->fieldSubmit(null, $this->_('Internetbs.tab_whois.field_submit', true), ['class' => 'btn btn-primary']);
-        ?>
+    <?php $this->Form->fieldSubmit(null, $this->_('Internetbs.tab_whois.field_submit', true), [
+        'class' => 'btn btn-primary',
+    ]); ?>
 </div>
-<?php
-    $this->Form->end();
-    ?>
+<?php $this->Form->end();
+?>

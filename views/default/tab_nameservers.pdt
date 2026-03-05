@@ -1,30 +1,20 @@
 <?php /** @var View $this **/ ?>
 
-<?php
-    $this->Form->create();
-    ?>
+<?php $this->Form->create(); ?>
 <div>
-    <?php
-
-            foreach ($nameserver_fields ?? [] as $name => $field) {
-            ?>
+    <?php foreach ($nameserver_fields ?? [] as $name => $field) { ?>
     <div class="mb-3">
     <?php
-
-                $this->Form->label($field['label'], $name, ['class' => 'form-label']);
-                $this->Form->fieldText($name, ($vars->{$name} ?? ''), ['id' => $name, 'class' => 'form-control']);
-                ?>
+    $this->Form->label($field['label'], $name, ['class' => 'form-label']);
+    $this->Form->fieldText($name, $vars->{$name} ?? '', ['id' => $name, 'class' => 'form-control']);
+    ?>
     </div>
-    <?php
-            }
-            ?>
+    <?php } ?>
 </div>
 <div class="d-flex justify-content-end">
-    <?php
-
-        $this->Form->fieldSubmit(null, $this->_('Internetbs.tab_nameservers.field_submit', true), ['class' => 'btn btn-primary']);
-        ?>
+    <?php $this->Form->fieldSubmit(null, $this->_('Internetbs.tab_nameservers.field_submit', true), [
+        'class' => 'btn btn-primary',
+    ]); ?>
 </div>
-<?php
-    $this->Form->end();
-    ?>
+<?php $this->Form->end();
+?>
