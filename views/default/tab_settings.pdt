@@ -1,11 +1,13 @@
 <?php /** @var View $this **/ ?>
 
-<?php $this->Form->create(); ?>
-<h6 class="form-section-header first"><?php $this->_('Internetbs.tab_settings.heading_settings'); ?></h6>
+<?php
+$this->Form->create();
+?>
+<h6 class="form-section-header"><?php $this->_('Internetbs.tab_settings.heading_settings'); ?></h6>
 <div>
     <div class="mb-3">
     <?php $this->Form->label($this->_('Internetbs.tab_settings.field_registrar_lock', true), 'registrarlock', [
-        'class' => 'form-label',
+        'class' => 'form-label'
     ]); ?>
         <div class="form-check">
             <?php
@@ -36,7 +38,7 @@
     <?php if ($id_protection ?? false) { ?>
     <div class="mb-3">
     <?php $this->Form->label($this->_('Internetbs.tab_settings.field_whois_privacy', true), 'privatewhois', [
-        'class' => 'form-label',
+        'class' => 'form-label'
     ]); ?>
         <div class="form-check">
             <?php
@@ -70,7 +72,7 @@
 
 <?php if ($epp_code ?? false) { ?>
 <h6 class="form-section-header"><?php $this->_('Internetbs.tab_settings.heading_auth_code'); ?></h6>
-<div class="pad">
+<div class="mb-3">
     <p><?php $this->_('Internetbs.tab_settings.text_auth_code'); ?></p>
     <div><span class="badge bg-info"><?php echo $this->Html->safe($vars->transferauthinfo ?? ''); ?></span></div>
 </div>
@@ -78,8 +80,9 @@
 
 <div class="d-flex justify-content-end">
     <?php $this->Form->fieldSubmit('save', $this->_('Internetbs.tab_settings.field_submit', true), [
-        'class' => 'btn btn-primary',
+        'class' => 'btn btn-primary'
     ]); ?>
 </div>
-    <?php $this->Form->end();
+    <?php
+$this->Form->end();
 ?>
