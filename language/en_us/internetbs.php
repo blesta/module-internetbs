@@ -25,6 +25,8 @@ $lang['Internetbs.manage.module_rows.confirm_delete'] = 'Are you sure you want t
 $lang['Internetbs.manage.module_rows_no_results'] = 'There are no Accounts.';
 
 $lang['Internetbs.manage.module_groups_title'] = 'Groups';
+$lang['Internetbs.manage.tab_rows'] = 'Servers';
+$lang['Internetbs.manage.tab_groups'] = 'Server Groups';
 $lang['Internetbs.manage.module_groups_heading.name'] = 'Name';
 $lang['Internetbs.manage.module_groups_heading.module_rows'] = 'Accounts';
 $lang['Internetbs.manage.module_groups_heading.options'] = 'Options';
