@@ -341,7 +341,7 @@ class Internetbs extends RegistrarModule
 
             return ($response->status() == 200);
         } catch (\Throwable $e) {
-            // Trap any errors encountered, could not validate connection
+            $this->log('validateConnection', serialize(['error' => $e->getMessage()]), 'output', false);
         }
 
         return false;
@@ -606,9 +606,7 @@ class Internetbs extends RegistrarModule
             return;
         }
 
-        if (isset($vars['Domain'])) {
-            $tld = $this->getTld($vars['Domain']);
-        }
+        $tld = $this->getTld($vars['Domain'] ?? $vars['domain'] ?? '');
 
         // Build input fields
         $whois_fields = Configure::get('Internetbs.whois_fields');
@@ -716,10 +714,10 @@ class Internetbs extends RegistrarModule
                         $vars[$key] = !empty($client->zip) ? $client->zip : '00000';
                         break;
                     case 'telHostingAccount':
-                        $vars[$key] = $this->generateUsername($vars['Domain']);
+                        $vars[$key] = $this->generateUsername($vars['Domain'] ?? $vars['domain'] ?? '');
                         break;
                     case 'telHostingPassword':
-                        $vars[$key] = substr(base64_encode(md5($vars['Domain'])), 0, 12);
+                        $vars[$key] = substr(base64_encode(md5($vars['Domain'] ?? $vars['domain'] ?? '')), 0, 12);
                         break;
                     case 'clientIp':
                         $requestor = $this->getFromContainer('requestor');
@@ -738,9 +736,9 @@ class Internetbs extends RegistrarModule
 
             // Register or transfer domain
             if (isset($vars['transfer']) || isset($vars['transferAuthInfo'])) {
-                $this->transferDomain($vars['Domain'], $row->id ?? null, $params);
+                $this->transferDomain($vars['Domain'] ?? $vars['domain'] ?? '', $row->id ?? null, $params);
             } else {
-                $this->registerDomain($vars['Domain'], $row->id ?? null, $params);
+                $this->registerDomain($vars['Domain'] ?? $vars['domain'] ?? '', $row->id ?? null, $params);
             }
         }
 
@@ -748,7 +746,7 @@ class Internetbs extends RegistrarModule
         return [
             [
                 'key' => 'domain',
-                'value' => $vars['Domain'],
+                'value' => $vars['Domain'] ?? $vars['domain'] ?? '',
                 'encrypted' => 0
             ]
         ];

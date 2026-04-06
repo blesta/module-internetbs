@@ -55,6 +55,11 @@ class InternetbsApi
     private $last_request = [];
 
     /**
+     * @var mixed The logger instance
+     */
+    private $logger;
+
+    /**
      * Initializes the request parameter
      *
      * @param string $api_key The API key provided by Internet.bs
