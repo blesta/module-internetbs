@@ -2447,7 +2447,7 @@ class Internetbs extends RegistrarModule
         );
 
         if ($cache) {
-            $response = unserialize(base64_decode($cache));
+            $response = safe_unserialize(base64_decode($cache));
         }
 
         // Get remote price list
