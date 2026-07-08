@@ -537,6 +537,10 @@ Configure::set('Internetbs.whois_fields', [
         'label' => Language::_('Internetbs.whois.Registrant_LastName', true),
         'type' => 'text'
     ],
+    'Registrant_Organization' => [
+        'label' => Language::_('Internetbs.whois.Registrant_Organization', true),
+        'type' => 'text'
+    ],
     'Registrant_Email' => [
         'label' => Language::_('Internetbs.whois.Registrant_Email', true),
         'type' => 'text'
