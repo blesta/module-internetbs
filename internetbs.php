@@ -2,6 +2,7 @@
 
 use Blesta\Core\Util\Validate\Server;
 use Blesta\Core\Util\Common\Traits\Container;
+use Blesta\Core\Util\Common\Classes\Model;
 
 /**
  * Internet.bs Module
@@ -2447,7 +2448,7 @@ class Internetbs extends RegistrarModule
         );
 
         if ($cache) {
-            $response = safe_unserialize(base64_decode($cache));
+            $response = Model::safeUnserialize(base64_decode($cache));
         }
 
         // Get remote price list
