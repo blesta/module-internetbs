@@ -206,6 +206,7 @@ $lang['Internetbs.nameserver.ns4'] = 'Name Server 4';
 $lang['Internetbs.nameserver.ns5'] = 'Name Server 5';
 
 // Transfer Fields
+$lang['Internetbs.transfer.Domain'] = 'Domain';
 $lang['Internetbs.transfer.transferAuthInfo'] = 'EPP Code';
 
 // Domain Fields
