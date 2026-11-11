@@ -2141,16 +2141,7 @@ class Internetbs extends RegistrarModule
      */
     private function getTld($domain)
     {
-        $tlds = $this->getTlds();
-
-        $domain = strtolower($domain);
-
-        foreach ($tlds as $tld) {
-            if (substr($domain, -strlen($tld)) == $tld) {
-                return $tld;
-            }
-        }
-        return strstr($domain, '.');
+        return $this->findTld($domain);
     }
 
     /**
