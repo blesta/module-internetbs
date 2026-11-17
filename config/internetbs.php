@@ -527,6 +527,46 @@ Configure::set('Internetbs.nameserver_fields', [
     ]
 ]);
 
+// Optional domain owner (registrant) entered during the order
+Configure::set('Internetbs.owner_fields', [
+    'Registrant_Organization' => [
+        'label' => Language::_('Internetbs.owner.Registrant_Organization', true),
+        'type' => 'text'
+    ],
+    'Registrant_FirstName' => [
+        'label' => Language::_('Internetbs.whois.Registrant_FirstName', true),
+        'type' => 'text'
+    ],
+    'Registrant_LastName' => [
+        'label' => Language::_('Internetbs.whois.Registrant_LastName', true),
+        'type' => 'text'
+    ],
+    'Registrant_Email' => [
+        'label' => Language::_('Internetbs.whois.Registrant_Email', true),
+        'type' => 'text'
+    ],
+    'Registrant_PhoneNumber' => [
+        'label' => Language::_('Internetbs.whois.Registrant_PhoneNumber', true),
+        'type' => 'text'
+    ],
+    'Registrant_Street' => [
+        'label' => Language::_('Internetbs.whois.Registrant_Street', true),
+        'type' => 'text'
+    ],
+    'Registrant_PostalCode' => [
+        'label' => Language::_('Internetbs.whois.Registrant_PostalCode', true),
+        'type' => 'text'
+    ],
+    'Registrant_City' => [
+        'label' => Language::_('Internetbs.whois.Registrant_City', true),
+        'type' => 'text'
+    ],
+    'Registrant_CountryCode' => [
+        'label' => Language::_('Internetbs.whois.Registrant_CountryCode', true),
+        'type' => 'text'
+    ]
+]);
+
 // Whois fields
 Configure::set('Internetbs.whois_fields', [
     'Registrant_FirstName' => [

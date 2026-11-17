@@ -365,3 +365,9 @@ $lang['Internetbs.whois.Billing_Street2'] = 'Address 2';
 $lang['Internetbs.whois.Billing_City'] = 'City';
 $lang['Internetbs.whois.Billing_CountryCode'] = 'Country Code';
 $lang['Internetbs.whois.Billing_PostalCode'] = 'Postal Code';
+
+// Domain owner in the order form
+$lang['Internetbs.owner.Registrant_Organization'] = 'Company / organization (optional)';
+$lang['Internetbs.!error.owner.incomplete'] = 'Please complete all details of the domain owner (name, email, phone, address, country).';
+$lang['Internetbs.!error.owner.email'] = 'Please enter a valid email address for the domain owner.';
+$lang['Internetbs.!error.owner.country'] = 'Please enter the domain owner\'s country as a 2-letter code (e.g. CH).';

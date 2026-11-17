@@ -648,7 +648,14 @@ class Internetbs extends RegistrarModule
 
             $client = $this->Clients->get($vars['client_id']);
             $numbers = $this->Contacts->getNumbers($client->contact_id, 'phone');
+            // A different domain owner may have been entered during the order
+            $owner = $this->getCustomOwner((array) $vars);
+
             foreach ($input_fields as $key => $field) {
+                if ($owner && strpos($key, 'Registrant_') === 0) {
+                    $vars[$key] = $owner[$key] ?? '';
+                    continue;
+                }
                 switch ($key) {
                     case 'Registrant_FirstName':
                     case 'Admin_FirstName':
@@ -726,6 +733,16 @@ class Internetbs extends RegistrarModule
                 }
             }
 
+            // Organization of the domain owner (the client's company unless a different owner was entered)
+            if ($owner) {
+                $vars['Registrant_Organization'] = $owner['Registrant_Organization'] ?? '';
+            } elseif (!empty($client->company)) {
+                $vars['Registrant_Organization'] = $client->company;
+            }
+            if (isset($vars['Registrant_Organization']) && trim((string) $vars['Registrant_Organization']) === '') {
+                unset($vars['Registrant_Organization']);
+            }
+
             // Set locality for .ASIA
             if ($tld == '.asia') {
                 $vars['DotAsiaCedLocality'] = $client->country;
@@ -743,13 +760,64 @@ class Internetbs extends RegistrarModule
         }
 
         // Return service fields
-        return [
+        $fields = [
             [
                 'key' => 'domain',
                 'value' => $vars['Domain'] ?? $vars['domain'] ?? '',
                 'encrypted' => 0
             ]
         ];
+
+        // Keep a different domain owner for the registration once a pending service is activated
+        $owner = $owner ?? $this->getCustomOwner((array) $vars);
+        if ($owner && ($vars['use_module'] ?? 'false') != 'true') {
+            foreach ($owner as $key => $value) {
+                $fields[] = ['key' => $key, 'value' => (string) $value, 'encrypted' => 0];
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Returns the domain owner entered during the order, or null if the client should be the owner
+     *
+     * @param array $vars The service input
+     * @return array|null The Registrant_* fields, or null
+     */
+    private function getCustomOwner(array $vars)
+    {
+        if (trim((string) ($vars['Registrant_FirstName'] ?? '')) === ''
+            || trim((string) ($vars['Registrant_LastName'] ?? '')) === ''
+            || trim((string) ($vars['Registrant_Email'] ?? '')) === ''
+        ) {
+            return null;
+        }
+
+        $owner = [];
+        foreach (array_keys((array) Configure::get('Internetbs.owner_fields')) as $key) {
+            $owner[$key] = trim((string) ($vars[$key] ?? ''));
+        }
+        $owner['Registrant_CountryCode'] = strtoupper($owner['Registrant_CountryCode']);
+        if ($owner['Registrant_PhoneNumber'] !== '' && strpos($owner['Registrant_PhoneNumber'], '.') === false) {
+            $owner['Registrant_PhoneNumber'] = $this->formatPhone(
+                $owner['Registrant_PhoneNumber'],
+                $owner['Registrant_CountryCode']
+            );
+        }
+
+        return $owner;
+    }
+
+    /**
+     * Adds the optional domain owner fields to the order form fields
+     *
+     * @param array $fields The module fields
+     * @return array The module fields including the domain owner fields
+     */
+    private function addOwnerFields(array $fields)
+    {
+        return array_merge($fields, (array) Configure::get('Internetbs.owner_fields'));
     }
 
     /**
@@ -921,6 +989,37 @@ class Internetbs extends RegistrarModule
             }
         }
 
+        // A different domain owner must be complete
+        $owner_given = false;
+        foreach (array_keys((array) Configure::get('Internetbs.owner_fields')) as $key) {
+            if (!in_array($key, ['Registrant_Organization', 'Registrant_CountryCode'])
+                && trim((string) ($vars[$key] ?? '')) !== ''
+            ) {
+                $owner_given = true;
+                break;
+            }
+        }
+        if (!$edit && $owner_given) {
+            foreach (['Registrant_FirstName', 'Registrant_LastName', 'Registrant_Email', 'Registrant_PhoneNumber',
+                'Registrant_Street', 'Registrant_PostalCode', 'Registrant_City', 'Registrant_CountryCode'] as $key) {
+                $rules[$key] = [
+                    'empty' => [
+                        'rule' => 'isEmpty',
+                        'negate' => true,
+                        'message' => Language::_('Internetbs.!error.owner.incomplete', true)
+                    ]
+                ];
+            }
+            $rules['Registrant_Email']['valid'] = [
+                'rule' => 'isEmail',
+                'message' => Language::_('Internetbs.!error.owner.email', true)
+            ];
+            $rules['Registrant_CountryCode']['valid'] = [
+                'rule' => ['matches', '/^[A-Za-z]{2}$/'],
+                'message' => Language::_('Internetbs.!error.owner.country', true)
+            ];
+        }
+
         return $rules;
     }
 
@@ -979,6 +1078,7 @@ class Internetbs extends RegistrarModule
             )
         );
 
+        $supported_fields[] = 'Registrant_Organization';
         foreach ($vars as $key => $value) {
             if (!in_array($key, $supported_fields)) {
                 unset($vars[$key]);
@@ -1913,11 +2013,11 @@ class Internetbs extends RegistrarModule
             ), null, $vars);
         } else {
             // Handle domain registration
-            $fields = array_merge(
+            $fields = $this->addOwnerFields(array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
                 Configure::get('Internetbs.domain_fields'),
                 (array) Configure::get('Internetbs.domain_fields' . $tld)
-            );
+            ));
             $module_fields = $this->arrayToModuleFields($fields, null, $vars);
 
             // Build the domain fields
@@ -2017,10 +2117,10 @@ class Internetbs extends RegistrarModule
         // Handle transfer request
         $tld = $this->getTld($vars->domain ?? '');
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
-            $fields = array_merge(
+            $fields = $this->addOwnerFields(array_merge(
                 Configure::get('Internetbs.transfer_fields'),
                 (array) Configure::get('Internetbs.domain_fields' . $tld)
-            );
+            ));
 
             // We should already have the domain name don't make editable
             $fields['Domain']['type'] = 'hidden';
@@ -2029,11 +2129,11 @@ class Internetbs extends RegistrarModule
             return $this->arrayToModuleFields($fields, null, $vars);
         } else {
             // Handle domain registration
-            $fields = array_merge(
+            $fields = $this->addOwnerFields(array_merge(
                 Configure::get('Internetbs.nameserver_fields'),
                 Configure::get('Internetbs.domain_fields'),
                 (array) Configure::get('Internetbs.domain_fields' . $tld)
-            );
+            ));
 
             // We should already have the domain name don't make editable
             $fields['Domain']['type'] = 'hidden';
@@ -2078,6 +2178,8 @@ class Internetbs extends RegistrarModule
                 );
 
                 if ($client) {
+                    $fields = $this->addOwnerFields($fields);
+
                     // We should already have the domain name don't make editable
                     $fields['Domain']['type'] = 'hidden';
                     $fields['Domain']['label'] = null;
