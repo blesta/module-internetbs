@@ -1044,6 +1044,7 @@ class Internetbs extends RegistrarModule
         $tabs = [
             'tabClientWhois' => Language::_('Internetbs.tab_client_whois', true),
             'tabClientNameservers' => Language::_('Internetbs.tab_client_nameservers', true),
+            'tabClientDns' => Language::_('Internetbs.dns.tab', true),
             'tabClientUrlForwarding' => Language::_('Internetbs.tab_client_urlforwarding', true),
             'tabClientEmailForwarding' => Language::_('Internetbs.tab_client_emailforwarding', true),
             'tabClientSettings' => Language::_('Internetbs.tab_client_settings', true)
@@ -1051,7 +1052,7 @@ class Internetbs extends RegistrarModule
 
         // Check if DNS Management is enabled
         if (!$this->featureServiceEnabled('dns_management', $service)) {
-            unset($tabs['tabClientUrlForwarding']);
+            unset($tabs['tabClientDns'], $tabs['tabClientUrlForwarding']);
         }
 
         // Check if Email Forwarding is enabled
@@ -1074,6 +1075,7 @@ class Internetbs extends RegistrarModule
         $tabs = [
             'tabWhois' => Language::_('Internetbs.tab_whois', true),
             'tabNameservers' => Language::_('Internetbs.tab_nameservers', true),
+            'tabDns' => Language::_('Internetbs.dns.tab', true),
             'tabUrlForwarding' => Language::_('Internetbs.tab_urlforwarding', true),
             'tabEmailForwarding' => Language::_('Internetbs.tab_emailforwarding', true),
             'tabSettings' => Language::_('Internetbs.tab_settings', true)
@@ -1081,7 +1083,7 @@ class Internetbs extends RegistrarModule
 
         // Check if DNS Management is enabled
         if (!$this->featureServiceEnabled('dns_management', $service)) {
-            unset($tabs['tabUrlForwarding']);
+            unset($tabs['tabDns'], $tabs['tabUrlForwarding']);
         }
 
         // Check if Email Forwarding is enabled
@@ -3055,5 +3057,372 @@ class Internetbs extends RegistrarModule
         $last_request = $api->lastRequest();
         $this->log($last_request['url'], serialize($last_request['args'] ?? []), 'input', true);
         $this->log($last_request['url'], $response->raw(), 'output', $response->status() == 200);
+    }
+
+    // ------------------------------------------------------------------
+    // DNS records (free DNS hosting for domains registered through Internet.bs)
+    // ------------------------------------------------------------------
+
+    /** Name servers of the Internet.bs DNS hosting */
+    private const IBS_NAMESERVERS = ['ns-usa.topdns.com', 'ns-uk.topdns.com', 'ns-canada.topdns.com'];
+
+    /** Record types that can be managed (CAA is not supported by the API) */
+    private const DNS_TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV'];
+
+    /** Allowed TTL values in seconds */
+    private const DNS_TTLS = [300, 3600, 14400, 86400];
+
+    /**
+     * DNS tab (admin)
+     */
+    public function tabDns($package, $service, array $get = null, array $post = null, array $files = null)
+    {
+        return $this->dnsTab('tab_dns', $service, $post, false);
+    }
+
+    /**
+     * DNS tab (client)
+     */
+    public function tabClientDns($package, $service, array $get = null, array $post = null, array $files = null)
+    {
+        return $this->dnsTab('tab_client_dns', $service, $post, true);
+    }
+
+    /**
+     * Shared logic of the DNS tabs: list, add, update, delete, templates, switch nameservers.
+     */
+    private function dnsTab($view_name, $service, $post, $is_client)
+    {
+        $this->view = new View($view_name, 'default');
+        $this->view->base_uri = $this->base_uri;
+        Loader::loadHelpers($this, ['Form', 'Html']);
+
+        $service_fields = $this->serviceFieldsToObject($service->fields);
+        $domain = strtolower(trim((string) ($service_fields->domain ?? '')));
+        $records = [];
+        $nameservers = [];
+        $uses_ibs = false;
+        $notice = null;
+        $vars = new stdClass();
+
+        try {
+            $row = $this->getModuleRow($service->module_row_id);
+            $api = $this->getApi($row->meta->api_key, $row->meta->password, $row->meta->sandbox);
+            $command = new InternetbsDomainDnsrecord($api);
+
+            if (!empty($post) && $domain !== '') {
+                $action = (string) ($post['dns_action'] ?? '');
+                $current = $this->dnsList($api, $command, $domain);
+                if (!$this->Input->errors()) {
+                    $ok = false;
+                    if ($action === 'add' || $action === 'update') {
+                        $ok = $this->dnsSave($api, $command, $domain, $current, $post, $action);
+                        if (!$ok) {
+                            $vars = (object) $post;
+                        }
+                    } elseif ($action === 'delete') {
+                        $record = $this->dnsFindByKey($current, (string) ($post['dns_key'] ?? ''));
+                        if ($record) {
+                            $ok = $this->dnsRemove($api, $command, $record);
+                        }
+                    } elseif ($action === 'template') {
+                        $ok = $this->dnsTemplate($api, $command, $domain, $current, (string) ($post['dns_template'] ?? ''));
+                    } elseif ($action === 'use_ibs_ns') {
+                        $ok = $this->setDomainNameservers($domain, $service->module_row_id, self::IBS_NAMESERVERS);
+                    }
+                    if ($ok && !$this->Input->errors()) {
+                        $notice = Language::_('Internetbs.dns.saved', true);
+                    }
+                }
+            }
+
+            if ($domain !== '') {
+                $records = $this->dnsList($api, $command, $domain);
+            }
+
+            try {
+                foreach ((array) $this->getDomainNameServers($domain, $service->module_row_id) as $ns) {
+                    $nameservers[] = strtolower(rtrim((string) ($ns['url'] ?? ''), '.'));
+                }
+                $nameservers = array_values(array_filter($nameservers));
+                $uses_ibs = !empty($nameservers);
+                foreach ($nameservers as $ns) {
+                    if (substr($ns, -strlen('.topdns.com')) !== '.topdns.com') {
+                        $uses_ibs = false;
+                    }
+                }
+            } catch (Throwable $e) {
+                // Name servers unknown: the hint is simply not shown
+            }
+        } catch (Throwable $e) {
+            $this->Input->setErrors(['errors' => ['dns' => $e->getMessage()]]);
+        }
+
+        // Sort by type, then by name
+        $order = array_flip(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'NS']);
+        usort($records, function ($a, $b) use ($order) {
+            $ta = $order[$a['type']] ?? 99;
+            $tb = $order[$b['type']] ?? 99;
+            return $ta === $tb ? strcmp($a['host'], $b['host']) : $ta - $tb;
+        });
+
+        $this->view->set('service_fields', $service_fields);
+        $this->view->set('service_id', $service->id);
+        $this->view->set('client_id', $service->client_id);
+        $this->view->set('domain', $domain);
+        $this->view->set('records', $records);
+        $this->view->set('nameservers', $nameservers);
+        $this->view->set('uses_ibs', $uses_ibs);
+        $this->view->set('ibs_nameservers', self::IBS_NAMESERVERS);
+        $this->view->set('dns_types', self::DNS_TYPES);
+        $this->view->set('dns_ttls', self::DNS_TTLS);
+        $this->view->set('notice', $notice);
+        $this->view->set('vars', $vars);
+        $this->view->set('is_client', $is_client);
+        $this->view->setDefaultView('components' . DS . 'modules' . DS . 'internetbs' . DS);
+
+        return $this->view->fetch();
+    }
+
+    /** Records of the zone, normalized: name, host (relative), type, value, ttl, priority, key */
+    private function dnsList($api, $command, $domain)
+    {
+        $response = $command->list(['Domain' => $domain]);
+        $this->processResponse($api, $response);
+        if ($response->status() != 200) {
+            return [];
+        }
+        $data = $response->response();
+        $out = [];
+        foreach ((array) ($data->records ?? []) as $r) {
+            $name = strtolower(rtrim((string) ($r->name ?? ''), '.'));
+            if ($name !== $domain && substr($name, -strlen('.' . $domain)) !== '.' . $domain) {
+                continue;
+            }
+            $type = strtoupper((string) ($r->type ?? ''));
+            $record = [
+                'name' => $name,
+                'host' => $name === $domain ? '@' : substr($name, 0, -strlen('.' . $domain)),
+                'type' => $type,
+                'value' => (string) ($r->value ?? ''),
+                'ttl' => (int) ($r->ttl ?? 3600),
+                'priority' => isset($r->priority) && $r->priority !== '' ? (int) $r->priority : null,
+                'editable' => in_array($type, self::DNS_TYPES, true),
+            ];
+            $record['key'] = $this->dnsKey($record);
+            $out[] = $record;
+        }
+        return $out;
+    }
+
+    private function dnsKey(array $r)
+    {
+        return hash('sha256', $r['name'] . "\n" . $r['type'] . "\n" . $r['value'] . "\n" . (string) $r['priority']);
+    }
+
+    private function dnsFindByKey(array $records, $key)
+    {
+        foreach ($records as $r) {
+            if ($key !== '' && hash_equals($r['key'], $key) && $r['editable']) {
+                return $r;
+            }
+        }
+        return null;
+    }
+
+    /** Validates the form; returns [full name, type, value, ttl, priority] or null (errors set) */
+    private function dnsValidate($domain, array $post)
+    {
+        $type = strtoupper(trim((string) ($post['type'] ?? '')));
+        $host = strtolower(trim((string) ($post['host'] ?? '')));
+        $host = rtrim($host, '.');
+        if ($host === '' || $host === '@') {
+            $name = $domain;
+        } elseif ($host === $domain || substr($host, -strlen('.' . $domain)) === '.' . $domain) {
+            $name = $host;
+        } else {
+            $name = $host . '.' . $domain;
+        }
+        $value = trim((string) ($post['value'] ?? ''));
+        $ttl = (int) ($post['ttl'] ?? 3600);
+        $priority = trim((string) ($post['priority'] ?? ''));
+        $errors = [];
+
+        if (!in_array($type, self::DNS_TYPES, true)) {
+            $errors['type'] = Language::_('Internetbs.!error.dns.type', true);
+        }
+        $label = '(?:\*|_?[a-z0-9](?:[a-z0-9_-]{0,61}[a-z0-9])?)';
+        if ($name !== $domain && !preg_match('/^(' . $label . '\.)+' . preg_quote($domain, '/') . '$/', $name)) {
+            $errors['host'] = Language::_('Internetbs.!error.dns.host', true);
+        }
+        if (!in_array($ttl, self::DNS_TTLS, true)) {
+            $ttl = 3600;
+        }
+        $hostname = '/^(?=.{1,253}$)([a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\.?$/i';
+        switch ($type) {
+            case 'A':
+                if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                    $errors['value'] = Language::_('Internetbs.!error.dns.ipv4', true);
+                }
+                break;
+            case 'AAAA':
+                if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                    $errors['value'] = Language::_('Internetbs.!error.dns.ipv6', true);
+                }
+                break;
+            case 'CNAME':
+                if ($name === $domain) {
+                    $errors['host'] = Language::_('Internetbs.!error.dns.cname_apex', true);
+                }
+                // no break
+            case 'MX':
+                $value = rtrim(strtolower($value), '.');
+                if (!preg_match($hostname, $value)) {
+                    $errors['value'] = Language::_('Internetbs.!error.dns.hostname', true);
+                }
+                break;
+            case 'TXT':
+                $value = trim($value, '"');
+                if ($value === '' || strlen($value) > 2000) {
+                    $errors['value'] = Language::_('Internetbs.!error.dns.txt', true);
+                }
+                break;
+            case 'SRV':
+                if (!preg_match('/^\d{1,5}\s+\d{1,5}\s+\S+$/', $value)) {
+                    $errors['value'] = Language::_('Internetbs.!error.dns.srv', true);
+                }
+                break;
+        }
+        if (in_array($type, ['MX', 'SRV'], true)) {
+            if ($priority === '' || !ctype_digit($priority) || (int) $priority > 65535) {
+                $errors['priority'] = Language::_('Internetbs.!error.dns.priority', true);
+            }
+        }
+
+        if ($errors) {
+            $this->Input->setErrors(['dns' => $errors]);
+            return null;
+        }
+
+        return [$name, $type, $value, $ttl, in_array($type, ['MX', 'SRV'], true) ? (int) $priority : null];
+    }
+
+    private function dnsSave($api, $command, $domain, array $current, array $post, $action)
+    {
+        $valid = $this->dnsValidate($domain, $post);
+        if (!$valid) {
+            return false;
+        }
+        [$name, $type, $value, $ttl, $priority] = $valid;
+
+        // A CNAME must be the only record of its name
+        foreach ($current as $r) {
+            if ($r['name'] !== $name) {
+                continue;
+            }
+            $self = $action === 'update' && hash_equals($r['key'], (string) ($post['dns_key'] ?? ''));
+            if (!$self && ($type === 'CNAME' || $r['type'] === 'CNAME')) {
+                $this->Input->setErrors(['dns' => ['cname' => Language::_('Internetbs.!error.dns.cname_conflict', true)]]);
+                return false;
+            }
+            if (!$self && $r['type'] === $type && $r['value'] === $value) {
+                $this->Input->setErrors(['dns' => ['duplicate' => Language::_('Internetbs.!error.dns.duplicate', true)]]);
+                return false;
+            }
+        }
+
+        if ($action === 'update') {
+            $old = $this->dnsFindByKey($current, (string) ($post['dns_key'] ?? ''));
+            if (!$old) {
+                $this->Input->setErrors(['dns' => ['missing' => Language::_('Internetbs.!error.dns.missing', true)]]);
+                return false;
+            }
+            if ($old['name'] === $name && $old['type'] === $type) {
+                $vars = [
+                    'FullRecordName' => $name,
+                    'Type' => $type,
+                    'CurrentValue' => $old['value'],
+                    'NewValue' => $value,
+                    'NewTtl' => $ttl,
+                ];
+                if ($old['priority'] !== null) {
+                    $vars['CurrentPriority'] = $old['priority'];
+                }
+                if ($priority !== null) {
+                    $vars['NewPriority'] = $priority;
+                }
+                $response = $command->update($vars);
+                $this->processResponse($api, $response);
+                return $response->status() == 200;
+            }
+            // Name or type changed: add the new record first, then remove the old one
+            if (!$this->dnsAdd($api, $command, $name, $type, $value, $ttl, $priority)) {
+                return false;
+            }
+            return $this->dnsRemove($api, $command, $old);
+        }
+
+        return $this->dnsAdd($api, $command, $name, $type, $value, $ttl, $priority);
+    }
+
+    private function dnsAdd($api, $command, $name, $type, $value, $ttl, $priority)
+    {
+        $vars = ['FullRecordName' => $name, 'Type' => $type, 'Value' => $value, 'Ttl' => $ttl];
+        if ($priority !== null) {
+            $vars['Priority'] = $priority;
+        }
+        $response = $command->add($vars);
+        $this->processResponse($api, $response);
+        return $response->status() == 200;
+    }
+
+    private function dnsRemove($api, $command, array $record)
+    {
+        $vars = ['FullRecordName' => $record['name'], 'Type' => $record['type'], 'Value' => $record['value']];
+        if ($record['priority'] !== null) {
+            $vars['Priority'] = $record['priority'];
+        }
+        $response = $command->remove($vars);
+        $this->processResponse($api, $response);
+        return $response->status() == 200;
+    }
+
+    /** Ready-made records for common e-mail providers (replace MX and SPF of the domain) */
+    private function dnsTemplate($api, $command, $domain, array $current, $template)
+    {
+        $templates = [
+            'microsoft365' => [
+                ['MX', $domain, str_replace('.', '-', $domain) . '.mail.protection.outlook.com', 0],
+                ['TXT', $domain, 'v=spf1 include:spf.protection.outlook.com -all', null],
+                ['CNAME', 'autodiscover.' . $domain, 'autodiscover.outlook.com', null],
+            ],
+            'google' => [
+                ['MX', $domain, 'smtp.google.com', 1],
+                ['TXT', $domain, 'v=spf1 include:_spf.google.com ~all', null],
+            ],
+        ];
+        if (!isset($templates[$template])) {
+            return false;
+        }
+
+        // Remove existing MX, SPF and the records the template sets
+        foreach ($current as $r) {
+            $remove = ($r['name'] === $domain && $r['type'] === 'MX')
+                || ($r['name'] === $domain && $r['type'] === 'TXT' && stripos($r['value'], 'v=spf1') === 0);
+            foreach ($templates[$template] as $t) {
+                if ($t[0] === 'CNAME' && $r['name'] === $t[1]) {
+                    $remove = true;
+                }
+            }
+            if ($remove && $r['editable'] && !$this->dnsRemove($api, $command, $r)) {
+                return false;
+            }
+        }
+        foreach ($templates[$template] as $t) {
+            if (!$this->dnsAdd($api, $command, $t[1], $t[0], $t[2], 3600, $t[3])) {
+                return false;
+            }
+        }
+        return true;
     }
 }

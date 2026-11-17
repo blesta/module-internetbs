@@ -1,0 +1,215 @@
+<?php
+/** @var View $this **/
+// DNS records
+$h = function ($v) { return $this->Html->safe((string) $v); };
+$editing = !empty($vars->dns_key);
+$sel_type = strtoupper((string) ($vars->type ?? 'A'));
+$sel_ttl = (int) ($vars->ttl ?? 3600);
+?>
+<div class="ibs-dns">
+    <?php if (!empty($notice)) { ?>
+    <div class="alert alert-success" role="status"><?php echo $h($notice); ?></div>
+    <?php } ?>
+
+    <?php if (!empty($nameservers) && !$uses_ibs) { ?>
+    <div class="alert alert-warning ibs-dns-ns">
+        <strong><?php $this->_('Internetbs.dns.ns_other_title'); ?></strong>
+        <p class="mb-2"><?php echo $h(sprintf($this->_('Internetbs.dns.ns_other_text', true), implode(', ', $nameservers))); ?></p>
+        <?php $this->Form->create(null, ['class' => 'ibs-dns-ns-form']); ?>
+            <input type="hidden" name="dns_action" value="use_ibs_ns">
+            <button type="submit" class="btn btn-warning btn-sm" data-confirm="<?php echo $h($this->_('Internetbs.dns.ns_switch_confirm', true)); ?>">
+                <?php $this->_('Internetbs.dns.ns_switch'); ?>
+            </button>
+            <?php if (empty($is_client)) { ?><span class="small ml-2"><?php echo $h(implode(', ', $ibs_nameservers)); ?></span><?php } ?>
+        <?php $this->Form->end(); ?>
+    </div>
+    <?php } elseif ($uses_ibs) { ?>
+    <p class="text-muted small"><i class="fas fa-check-circle text-success"></i> <?php $this->_('Internetbs.dns.ns_active'); ?></p>
+    <?php } ?>
+
+    <h4><?php echo $h(sprintf($this->_('Internetbs.dns.heading_records', true), $domain)); ?></h4>
+    <div class="table-responsive">
+        <table class="table table-curved table-striped ibs-dns-table">
+            <thead>
+                <tr>
+                    <th><?php $this->_('Internetbs.dns.col_host'); ?></th>
+                    <th><?php $this->_('Internetbs.dns.col_type'); ?></th>
+                    <th><?php $this->_('Internetbs.dns.col_value'); ?></th>
+                    <th><?php $this->_('Internetbs.dns.col_ttl'); ?></th>
+                    <th class="text-right"><?php $this->_('Internetbs.dns.col_options'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php if (empty($records)) { ?>
+                <tr><td colspan="5"><div class="alert alert-info mb-0"><?php $this->_('Internetbs.dns.empty'); ?></div></td></tr>
+            <?php } ?>
+            <?php foreach ($records as $r) { ?>
+                <tr>
+                    <td><code><?php echo $h($r['host']); ?></code></td>
+                    <td><span class="badge badge-light"><?php echo $h($r['type']); ?></span></td>
+                    <td class="ibs-dns-value">
+                        <?php if ($r['priority'] !== null) { ?><span class="text-muted"><?php echo $h($r['priority']); ?></span> <?php } ?>
+                        <code><?php echo $h($r['value']); ?></code>
+                    </td>
+                    <td><?php echo $h($r['ttl'] >= 3600 && $r['ttl'] % 3600 === 0 ? ($r['ttl'] / 3600) . ' h' : ($r['ttl'] >= 60 ? round($r['ttl'] / 60) . ' min' : $r['ttl'] . ' s')); ?></td>
+                    <td class="text-right text-nowrap">
+                        <?php if ($r['editable']) { ?>
+                        <button type="button" class="btn btn-light btn-xs ibs-dns-edit"
+                            data-key="<?php echo $h($r['key']); ?>" data-host="<?php echo $h($r['host']); ?>"
+                            data-type="<?php echo $h($r['type']); ?>" data-value="<?php echo $h($r['value']); ?>"
+                            data-ttl="<?php echo $h($r['ttl']); ?>" data-priority="<?php echo $h($r['priority']); ?>">
+                            <i class="fas fa-pen fa-fw"></i> <?php $this->_('Internetbs.dns.edit'); ?>
+                        </button>
+                        <?php $this->Form->create(null, ['class' => 'd-inline']); ?>
+                            <input type="hidden" name="dns_action" value="delete">
+                            <input type="hidden" name="dns_key" value="<?php echo $h($r['key']); ?>">
+                            <button type="submit" class="btn btn-danger btn-xs" data-confirm="<?php echo $h($this->_('Internetbs.dns.delete_confirm', true)); ?>">
+                                <i class="fas fa-trash fa-fw"></i> <?php $this->_('Internetbs.dns.delete'); ?>
+                            </button>
+                        <?php $this->Form->end(); ?>
+                        <?php } else { ?>
+                        <span class="text-muted small"><?php $this->_('Internetbs.dns.readonly'); ?></span>
+                        <?php } ?>
+                    </td>
+                </tr>
+            <?php } ?>
+            </tbody>
+        </table>
+    </div>
+
+    <h4 id="ibs-dns-form-title" data-add="<?php echo $h($this->_('Internetbs.dns.heading_add', true)); ?>" data-edit="<?php echo $h($this->_('Internetbs.dns.heading_edit', true)); ?>">
+        <?php $this->_($editing ? 'Internetbs.dns.heading_edit' : 'Internetbs.dns.heading_add'); ?>
+    </h4>
+    <?php $this->Form->create(null, ['id' => 'ibs-dns-form']); ?>
+        <input type="hidden" name="dns_action" id="ibs-dns-action" value="<?php echo $editing ? 'update' : 'add'; ?>">
+        <input type="hidden" name="dns_key" id="ibs-dns-key" value="<?php echo $h($vars->dns_key ?? ''); ?>">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="ibs-dns-host"><?php $this->_('Internetbs.dns.col_host'); ?></label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="host" id="ibs-dns-host" value="<?php echo $h($vars->host ?? ''); ?>" placeholder="@" autocomplete="off">
+                        <div class="input-group-append"><span class="input-group-text">.<?php echo $h($domain); ?></span></div>
+                    </div>
+                    <small class="form-text text-muted"><?php $this->_('Internetbs.dns.host_help'); ?></small>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="ibs-dns-type"><?php $this->_('Internetbs.dns.col_type'); ?></label>
+                    <select class="form-control" name="type" id="ibs-dns-type">
+                        <?php foreach ($dns_types as $t) { ?>
+                        <option value="<?php echo $h($t); ?>"<?php echo $t === $sel_type ? ' selected' : ''; ?>><?php echo $h($t); ?></option>
+                        <?php } ?>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-1 ibs-dns-prio">
+                <div class="form-group">
+                    <label for="ibs-dns-priority"><?php $this->_('Internetbs.dns.priority'); ?></label>
+                    <input type="number" min="0" max="65535" class="form-control" name="priority" id="ibs-dns-priority" value="<?php echo $h($vars->priority ?? '10'); ?>">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="ibs-dns-value"><?php $this->_('Internetbs.dns.col_value'); ?></label>
+                    <input type="text" class="form-control" name="value" id="ibs-dns-value" value="<?php echo $h($vars->value ?? ''); ?>" autocomplete="off">
+                    <small class="form-text text-muted" id="ibs-dns-value-help"></small>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="ibs-dns-ttl"><?php $this->_('Internetbs.dns.col_ttl'); ?></label>
+                    <select class="form-control" name="ttl" id="ibs-dns-ttl">
+                        <?php foreach ($dns_ttls as $t) { ?>
+                        <option value="<?php echo (int) $t; ?>"<?php echo (int) $t === $sel_ttl ? ' selected' : ''; ?>><?php echo $h($t >= 3600 ? ($t / 3600) . ' h' : ($t / 60) . ' min'); ?></option>
+                        <?php } ?>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="ibs-dns-actions">
+            <button type="button" class="btn btn-light" id="ibs-dns-cancel"<?php echo $editing ? '' : ' hidden'; ?>><?php $this->_('Internetbs.dns.cancel'); ?></button>
+            <button type="submit" class="btn btn-primary" id="ibs-dns-submit"
+                data-add="<?php echo $h($this->_('Internetbs.dns.add', true)); ?>" data-edit="<?php echo $h($this->_('Internetbs.dns.save', true)); ?>">
+                <?php $this->_($editing ? 'Internetbs.dns.save' : 'Internetbs.dns.add'); ?>
+            </button>
+        </div>
+    <?php $this->Form->end(); ?>
+
+    <h4 class="mt-4"><?php $this->_('Internetbs.dns.heading_templates'); ?></h4>
+    <p class="text-muted small"><?php $this->_('Internetbs.dns.templates_text'); ?></p>
+    <div class="ibs-dns-templates">
+        <?php foreach (['microsoft365', 'google'] as $tpl) { ?>
+        <?php $this->Form->create(null, ['class' => 'd-inline']); ?>
+            <input type="hidden" name="dns_action" value="template">
+            <input type="hidden" name="dns_template" value="<?php echo $h($tpl); ?>">
+            <button type="submit" class="btn btn-light" data-confirm="<?php echo $h($this->_('Internetbs.dns.template_confirm', true)); ?>">
+                <i class="fas fa-envelope fa-fw"></i> <?php $this->_('Internetbs.dns.template_' . $tpl); ?>
+            </button>
+        <?php $this->Form->end(); ?>
+        <?php } ?>
+    </div>
+    <p class="text-muted small mt-3"><?php $this->_('Internetbs.dns.propagation'); ?></p>
+</div>
+
+<style>
+.ibs-dns-table code { white-space: pre-wrap; word-break: break-all; font-size: 13px; }
+.ibs-dns-value { max-width: 420px; }
+.ibs-dns-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.ibs-dns-templates { display: flex; flex-wrap: wrap; gap: 8px; }
+.ibs-dns-ns-form { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+</style>
+<script>
+(function () {
+    var help = <?php echo json_encode([
+        'A' => $this->_('Internetbs.dns.help_a', true),
+        'AAAA' => $this->_('Internetbs.dns.help_aaaa', true),
+        'CNAME' => $this->_('Internetbs.dns.help_cname', true),
+        'MX' => $this->_('Internetbs.dns.help_mx', true),
+        'TXT' => $this->_('Internetbs.dns.help_txt', true),
+        'SRV' => $this->_('Internetbs.dns.help_srv', true),
+    ]); ?>;
+    var type = document.getElementById('ibs-dns-type');
+    var prio = document.querySelector('.ibs-dns-prio');
+    var valueHelp = document.getElementById('ibs-dns-value-help');
+    var form = document.getElementById('ibs-dns-form');
+    var title = document.getElementById('ibs-dns-form-title');
+    var submit = document.getElementById('ibs-dns-submit');
+    var cancel = document.getElementById('ibs-dns-cancel');
+    function sync() {
+        var t = type.value;
+        prio.hidden = !(t === 'MX' || t === 'SRV');
+        valueHelp.textContent = help[t] || '';
+    }
+    type.addEventListener('change', sync);
+    sync();
+    function mode(edit) {
+        document.getElementById('ibs-dns-action').value = edit ? 'update' : 'add';
+        title.textContent = edit ? title.getAttribute('data-edit') : title.getAttribute('data-add');
+        submit.textContent = edit ? submit.getAttribute('data-edit') : submit.getAttribute('data-add');
+        cancel.hidden = !edit;
+        if (!edit) { document.getElementById('ibs-dns-key').value = ''; }
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.ibs-dns-edit'), function (b) {
+        b.addEventListener('click', function () {
+            document.getElementById('ibs-dns-key').value = b.getAttribute('data-key');
+            document.getElementById('ibs-dns-host').value = b.getAttribute('data-host');
+            type.value = b.getAttribute('data-type');
+            document.getElementById('ibs-dns-value').value = b.getAttribute('data-value');
+            document.getElementById('ibs-dns-ttl').value = b.getAttribute('data-ttl');
+            if (b.getAttribute('data-priority') !== '') { document.getElementById('ibs-dns-priority').value = b.getAttribute('data-priority'); }
+            if (!document.getElementById('ibs-dns-ttl').value) { document.getElementById('ibs-dns-ttl').value = '3600'; }
+            sync();
+            mode(true);
+            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+    cancel.addEventListener('click', function () { form.reset(); mode(false); sync(); });
+    Array.prototype.forEach.call(document.querySelectorAll('.ibs-dns [data-confirm]'), function (b) {
+        b.addEventListener('click', function (e) {
+            if (!window.confirm(b.getAttribute('data-confirm'))) { e.preventDefault(); }
+        });
+    });
+})();
+</script>
