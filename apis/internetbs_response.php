@@ -36,10 +36,30 @@ class InternetbsResponse
         }
 
         // Set errors
+        // Some commands (e.g. Domain/Create, Domain/Transfer/Initiate) report a failure only inside the
+        // "product" list: {"status":"FAILURE","product":[{"status":"FAILURE","message":"..."}]}
         $this->errors = [];
-        if ($this->response && $this->response->status == 'FAILURE' && isset($this->response->message)) {
-            $this->status = (int) $this->response->code ?? 500;
-            $this->errors[$this->status] = $this->response->message;
+        if ($this->response && is_object($this->response)) {
+            $failed = isset($this->response->status) && strtoupper((string) $this->response->status) == 'FAILURE';
+            $message = isset($this->response->message) ? (string) $this->response->message : null;
+            $code = isset($this->response->code) ? (int) $this->response->code : null;
+
+            if (!empty($this->response->product) && is_array($this->response->product)) {
+                foreach ($this->response->product as $product) {
+                    if (isset($product->status) && strtoupper((string) $product->status) == 'FAILURE') {
+                        $failed = true;
+                        if ($message === null && isset($product->message)) {
+                            $message = (string) $product->message;
+                            $code = isset($product->code) ? (int) $product->code : $code;
+                        }
+                    }
+                }
+            }
+
+            if ($failed) {
+                $this->status = $code ?: 500;
+                $this->errors[$this->status] = $message ?? 'The registrar returned FAILURE without a message.';
+            }
         }
     }
 
