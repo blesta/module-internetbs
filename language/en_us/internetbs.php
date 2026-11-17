@@ -365,3 +365,5 @@ $lang['Internetbs.whois.Billing_Street2'] = 'Address 2';
 $lang['Internetbs.whois.Billing_City'] = 'City';
 $lang['Internetbs.whois.Billing_CountryCode'] = 'Country Code';
 $lang['Internetbs.whois.Billing_PostalCode'] = 'Postal Code';
+
+$lang['Internetbs.!error.transferAuthInfo.empty'] = 'Please enter the auth code (EPP code) from your current provider to transfer the domain.';
