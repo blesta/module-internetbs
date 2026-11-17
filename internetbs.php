@@ -607,6 +607,7 @@ class Internetbs extends RegistrarModule
         }
 
         $tld = $this->getTld($vars['Domain'] ?? $vars['domain'] ?? '');
+        $is_transfer = $this->isTransferRequest((array) $vars);
 
         // Build input fields
         $whois_fields = Configure::get('Internetbs.whois_fields');
@@ -732,24 +733,74 @@ class Internetbs extends RegistrarModule
             }
 
             // Get request fields
-            $params = $this->getFieldsFromInput((array) $vars, $package);
+            $params = $this->getFieldsFromInput((array) $vars, $package, $is_transfer);
 
             // Register or transfer domain
-            if (isset($vars['transfer']) || isset($vars['transferAuthInfo'])) {
+            if ($is_transfer) {
                 $this->transferDomain($vars['Domain'] ?? $vars['domain'] ?? '', $row->id ?? null, $params);
             } else {
                 $this->registerDomain($vars['Domain'] ?? $vars['domain'] ?? '', $row->id ?? null, $params);
             }
+
+            if ($this->Input->errors()) {
+                return;
+            }
         }
 
         // Return service fields
-        return [
+        // An order creates a pending service first (use_module is false) and the domain is only
+        // registered/transferred once the invoice is paid. At that point only the stored service fields
+        // are passed back to addService(), so the transfer flag, the auth code and the chosen name servers
+        // have to be stored as well. Otherwise transfers become registrations and the name servers chosen
+        // by the client are replaced by the package defaults.
+        $fields = [
             [
                 'key' => 'domain',
                 'value' => $vars['Domain'] ?? $vars['domain'] ?? '',
                 'encrypted' => 0
+            ],
+            [
+                'key' => 'transfer',
+                'value' => $is_transfer ? '1' : '0',
+                'encrypted' => 0
             ]
         ];
+        if ($is_transfer) {
+            $fields[] = [
+                'key' => 'transferAuthInfo',
+                'value' => (string) ($vars['transferAuthInfo'] ?? $vars['epp_code'] ?? ''),
+                'encrypted' => 1
+            ];
+        }
+        for ($i = 1; $i <= 5; $i++) {
+            if (isset($vars['ns' . $i]) && trim((string) $vars['ns' . $i]) !== '') {
+                $fields[] = ['key' => 'ns' . $i, 'value' => trim((string) $vars['ns' . $i]), 'encrypted' => 0];
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Determines whether the given input describes a domain transfer
+     *
+     * @param array $vars The service input
+     * @return bool True for a transfer, false for a registration
+     */
+    private function isTransferRequest(array $vars)
+    {
+        if (isset($vars['transfer'])) {
+            $flag = strtolower(trim((string) $vars['transfer']));
+            if (in_array($flag, ['1', 'true', 'yes', 'on'], true)) {
+                return true;
+            }
+            if (in_array($flag, ['0', 'false', 'no', 'off', ''], true)) {
+                // A stored "0" means registration, unless an auth code was given
+                return !empty($vars['transferAuthInfo']) || !empty($vars['epp_code']);
+            }
+        }
+
+        return array_key_exists('transferAuthInfo', $vars) || array_key_exists('epp_code', $vars);
     }
 
     /**
@@ -921,6 +972,17 @@ class Internetbs extends RegistrarModule
             }
         }
 
+        // A transfer cannot be started without the auth code
+        if (!$edit && is_array($vars) && $this->isTransferRequest($vars) && !isset($vars['epp_code'])) {
+            $rules['transferAuthInfo'] = [
+                'empty' => [
+                    'rule' => 'isEmpty',
+                    'negate' => true,
+                    'message' => Language::_('Internetbs.!error.transferAuthInfo.empty', true)
+                ]
+            ];
+        }
+
         return $rules;
     }
 
@@ -929,21 +991,39 @@ class Internetbs extends RegistrarModule
      *
      * @param array $vars An array of key/value input pairs
      * @param stdClass $package A stdClass object representing the package for the service
+     * @param bool|null $is_transfer Whether the input describes a transfer (null to detect it)
      * @return array An array of key/value pairs representing service fields
      */
-    private function getFieldsFromInput(array $vars, $package)
+    private function getFieldsFromInput(array $vars, $package, $is_transfer = null)
     {
+        if ($is_transfer === null) {
+            $is_transfer = isset($vars['epp_code']) || isset($vars['transferAuthInfo']);
+        }
+
         // Set nameservers list
+        // Registrations fall back to the package name servers. Transfers without chosen name servers
+        // keep the domain's current name servers, so Ns_list is not sent at all.
+        $custom_ns = false;
+        for ($i = 1; $i <= 5; $i++) {
+            if (!empty($vars['ns' . $i])) {
+                $custom_ns = true;
+            }
+        }
         $vars['Ns_list'] = '';
         for ($i = 1; $i <= 5; $i++) {
-            if (empty($vars['ns' . $i])) {
+            if (empty($vars['ns' . $i]) && !$is_transfer) {
                 $vars['ns' . $i] = $package->meta->ns[$i - 1] ?? '';
             }
 
-            $vars['Ns_list'] .= $vars['ns' . $i] . ',';
+            if (!empty($vars['ns' . $i])) {
+                $vars['Ns_list'] .= $vars['ns' . $i] . ',';
+            }
             unset($vars['ns' . $i]);
         }
         $vars['Ns_list'] = rtrim($vars['Ns_list'], ',');
+        if ($vars['Ns_list'] === '' || ($is_transfer && !$custom_ns)) {
+            unset($vars['Ns_list']);
+        }
 
         // Format period
         if (isset($vars['Period']) && !str_contains($vars['Period'], 'Y')) {
@@ -963,11 +1043,12 @@ class Internetbs extends RegistrarModule
             'Ns_list' => true
         ];
 
-        $supported_fields = isset($vars['epp_code']) || isset($vars['transferAuthInfo']) ? array_keys(
+        $supported_fields = $is_transfer ? array_keys(
             array_merge(
                 Configure::get('Internetbs.whois_fields'),
                 Configure::get('Internetbs.transfer_fields'),
-                (array) Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld),
+                ['Ns_list' => true]
             )
         ) : array_keys(
             array_merge(
@@ -2017,9 +2098,11 @@ class Internetbs extends RegistrarModule
         // Handle transfer request
         $tld = $this->getTld($vars->domain ?? '');
         if (isset($vars->transfer) || isset($vars->transferAuthInfo)) {
+            // Name servers are optional for a transfer: empty fields keep the current name servers
             $fields = array_merge(
                 Configure::get('Internetbs.transfer_fields'),
-                (array) Configure::get('Internetbs.domain_fields' . $tld)
+                (array) Configure::get('Internetbs.domain_fields' . $tld),
+                Configure::get('Internetbs.nameserver_fields')
             );
 
             // We should already have the domain name don't make editable
