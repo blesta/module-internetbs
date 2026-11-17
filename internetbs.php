@@ -2245,9 +2245,20 @@ class Internetbs extends RegistrarModule
 
         $domain_info = $response->response();
 
-        return isset($domain_info->registrationdate)
-            ? date($format, strtotime($domain_info->registrationdate))
+        // During a pending transfer the API returns "n/a"; strtotime() then fails and the date became
+        // 1969/1970. Some registries (e.g. .ch/.li) publish no creation date at all.
+        $timestamp = isset($domain_info->registrationdate)
+            ? strtotime((string) $domain_info->registrationdate)
             : false;
+
+        if ($timestamp !== false && (int) date('Y', $timestamp) >= 1985) {
+            return date($format, $timestamp);
+        }
+
+        // Fall back to the date the service was added
+        $added = !empty($service->date_added) ? strtotime($service->date_added) : false;
+
+        return $added ? date($format, $added) : false;
     }
 
     /**
@@ -2275,8 +2286,15 @@ class Internetbs extends RegistrarModule
 
         $domain_info = $response->response();
 
-        return isset($domain_info->expirationdate)
-            ? date($format, strtotime($domain_info->expirationdate))
+        // During a pending transfer the API returns "n/a"; strtotime() then fails and the renewal date
+        // became 1969/1970, which triggers an immediate renewal invoice. Return no date in that case;
+        // the real date is synchronized once the transfer has completed.
+        $timestamp = isset($domain_info->expirationdate)
+            ? strtotime((string) $domain_info->expirationdate)
+            : false;
+
+        return ($timestamp !== false && (int) date('Y', $timestamp) >= 1985)
+            ? date($format, $timestamp)
             : false;
     }
 
